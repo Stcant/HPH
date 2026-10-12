@@ -1,0 +1,213 @@
+use hph_core::*;
+use leptos::prelude::*;
+use serde::Deserialize;
+use std::sync::{Arc, Mutex};
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Config {
+    pub organization: String,
+    pub theme: String,
+    pub preset: String,
+}
+
+pub struct DemoState {
+    pub workspace: Mutex<Workspace>,
+    pub actor: Actor,
+}
+impl DemoState {
+    pub fn new(config: Config) -> Result<Self, String> {
+        if config.organization.trim().is_empty() || config.organization.len() > 100 {
+            return Err("Nome azienda non valido.".into());
+        }
+        if !["sage", "indigo"].contains(&config.theme.as_str()) {
+            return Err("Tema non valido: usa sage o indigo.".into());
+        }
+        let people = [
+            (
+                "elena",
+                "Elena Conti",
+                "EC",
+                "People & Culture",
+                "People manager",
+            ),
+            ("marco", "Marco Riva", "MR", "Design", "Product designer"),
+            (
+                "sofia",
+                "Sofia Bianchi",
+                "SB",
+                "Engineering",
+                "Software engineer",
+            ),
+            (
+                "luca",
+                "Luca Moretti",
+                "LM",
+                "Operations",
+                "Operations specialist",
+            ),
+        ]
+        .into_iter()
+        .map(|(id, name, initials, department, job)| Person {
+            id: id.into(),
+            name: name.into(),
+            initials: initials.into(),
+            department: department.into(),
+            job: job.into(),
+        })
+        .collect();
+        Ok(Self {
+            actor: Actor {
+                tenant_id: "demo".into(),
+                person_id: "elena".into(),
+                role: Role::Admin,
+            },
+            workspace: Mutex::new(Workspace {
+                tenant_id: "demo".into(),
+                organization: config.organization,
+                theme: config.theme,
+                modules: ModuleSet::preset(&config.preset)?,
+                people,
+                punches: vec![],
+            }),
+        })
+    }
+    pub fn snapshot(&self, workspace: &Workspace) -> Snapshot {
+        Snapshot {
+            workspace: workspace.clone(),
+            actor_id: self.actor.person_id.clone(),
+            catalog: catalog(),
+            server_time: chrono::Utc::now()
+                .format("%d/%m/%Y · %H:%M UTC")
+                .to_string(),
+        }
+    }
+}
+pub fn state() -> Result<Arc<DemoState>, ServerFnError> {
+    use_context::<Arc<DemoState>>()
+        .ok_or_else(|| ServerFnError::new("Contesto aziendale non disponibile."))
+}
+
+pub fn router(options: LeptosOptions, state: Arc<DemoState>) -> axum::Router {
+    use crate::app::{App, shell};
+    use axum::{Router, routing::get};
+    use leptos_axum::{LeptosRoutes, generate_route_list};
+    Router::new()
+        .route("/health", get(|| async { "HPH demo ready" }))
+        .leptos_routes_with_context(
+            &options,
+            generate_route_list(App),
+            move || provide_context(state.clone()),
+            {
+                let options = options.clone();
+                move || shell(options.clone())
+            },
+        )
+        .fallback(leptos_axum::file_and_error_handler(shell))
+        .with_state(options)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use http_body_util::BodyExt;
+    use leptos::server_fn::ServerFn;
+    use tower::ServiceExt;
+
+    fn app() -> axum::Router {
+        let options = get_configuration(None).unwrap().leptos_options;
+        router(
+            options,
+            Arc::new(
+                DemoState::new(Config {
+                    organization: "Test Company".into(),
+                    theme: "sage".into(),
+                    preset: "team".into(),
+                })
+                .unwrap(),
+            ),
+        )
+    }
+
+    async fn post(app: axum::Router, path: &str, body: &str) -> (StatusCode, String) {
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri(path)
+                    .header("content-type", "application/x-www-form-urlencoded")
+                    .header("accept", "application/json")
+                    .body(Body::from(body.to_string()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let status = response.status();
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        (status, String::from_utf8(bytes.to_vec()).unwrap())
+    }
+
+    #[tokio::test]
+    async fn server_functions_share_state_and_reject_double_entry() {
+        let app = app();
+        let (status, body) = post(app.clone(), crate::api::GetSnapshot::PATH, "").await;
+        assert_eq!(status, StatusCode::OK, "{body}");
+        let snapshot: Snapshot = serde_json::from_str(&body).unwrap();
+        assert_eq!(snapshot.workspace.organization, "Test Company");
+        let (status, body) = post(app.clone(), crate::api::RegisterPunch::PATH, "kind=in").await;
+        assert_eq!(status, StatusCode::OK, "{body}");
+        let (status, _) = post(app.clone(), crate::api::RegisterPunch::PATH, "kind=in").await;
+        assert!(!status.is_success());
+        let (_, body) = post(app.clone(), crate::api::GetSnapshot::PATH, "").await;
+        let snapshot: Snapshot = serde_json::from_str(&body).unwrap();
+        assert_eq!(snapshot.workspace.punches.len(), 1);
+        assert_eq!(snapshot.workspace.state("elena"), WorkState::Working);
+    }
+
+    #[tokio::test]
+    async fn module_enforcement_happens_at_the_http_boundary() {
+        let app = app();
+        let (status, body) = post(
+            app.clone(),
+            crate::api::ConfigureModule::PATH,
+            "id=attendance&enabled=false",
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK, "{body}");
+        let (status, _) = post(app.clone(), crate::api::RegisterPunch::PATH, "kind=in").await;
+        assert!(!status.is_success());
+        let (status, _) = post(
+            app.clone(),
+            crate::api::ConfigureModule::PATH,
+            "id=reports&enabled=true",
+        )
+        .await;
+        assert!(!status.is_success());
+        let (status, _) = post(
+            app,
+            crate::api::ConfigureModule::PATH,
+            "id=unknown&enabled=true",
+        )
+        .await;
+        assert!(!status.is_success());
+    }
+
+    #[tokio::test]
+    async fn ssr_page_contains_the_workspace_and_demo_disclosure() {
+        let response = app()
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let html = String::from_utf8(bytes.to_vec()).unwrap();
+        assert!(html.contains("Test Company"));
+        assert!(html.contains("DEMO LOCALE"));
+        assert!(html.contains("Tutto al posto giusto."));
+        assert!(html.contains("/pkg/hph.css"));
+    }
+}

@@ -1,0 +1,5 @@
+# Local demonstration only. No credentials or real employee data.
+organization = "Studio Aurora"
+theme = "sage"
+# Supported presets: essential, team, complete
+preset = "team"

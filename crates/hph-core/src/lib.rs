@@ -1,0 +1,350 @@
+//! Framework-independent module, permission and attendance contracts.
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ModuleId {
+    People,
+    Attendance,
+    Reports,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ModuleDefinition {
+    pub id: ModuleId,
+    pub name: String,
+    pub description: String,
+    pub dependencies: Vec<ModuleId>,
+}
+
+pub fn catalog() -> Vec<ModuleDefinition> {
+    vec![
+        ModuleDefinition {
+            id: ModuleId::People,
+            name: "Persone".into(),
+            description: "Il tuo team, i reparti e i contatti. Un punto di partenza condiviso."
+                .into(),
+            dependencies: vec![],
+        },
+        ModuleDefinition {
+            id: ModuleId::Attendance,
+            name: "Timbrature e presenze".into(),
+            description: "Entrate, pause e uscite. Una giornata di lavoro sempre leggibile.".into(),
+            dependencies: vec![ModuleId::People],
+        },
+        ModuleDefinition {
+            id: ModuleId::Reports,
+            name: "Report".into(),
+            description: "Riepiloghi delle ore registrate e delle sessioni concluse.".into(),
+            dependencies: vec![ModuleId::Attendance],
+        },
+    ]
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Role {
+    Employee,
+    Admin,
+}
+
+#[derive(Clone, Debug)]
+pub struct Actor {
+    pub tenant_id: String,
+    pub person_id: String,
+    pub role: Role,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ModuleSet {
+    pub enabled: Vec<ModuleId>,
+}
+
+impl ModuleSet {
+    pub fn preset(name: &str) -> Result<Self, String> {
+        let enabled = match name {
+            "essential" => vec![ModuleId::People],
+            "team" => vec![ModuleId::People, ModuleId::Attendance],
+            "complete" => vec![ModuleId::People, ModuleId::Attendance, ModuleId::Reports],
+            _ => return Err("Configurazione moduli non riconosciuta.".into()),
+        };
+        Ok(Self { enabled })
+    }
+    pub fn contains(&self, id: ModuleId) -> bool {
+        self.enabled.contains(&id)
+    }
+    pub fn set(&mut self, id: ModuleId, enabled: bool) -> Result<(), String> {
+        let mut next = self.clone();
+        next.enabled.retain(|value| *value != id);
+        if enabled {
+            next.enabled.push(id);
+        }
+        for definition in catalog().iter().filter(|m| next.contains(m.id)) {
+            if definition
+                .dependencies
+                .iter()
+                .any(|dependency| !next.contains(*dependency))
+            {
+                return Err(format!(
+                    "{} richiede le sue dipendenze attive. Attiva prima le dipendenze oppure disattiva prima questo modulo.",
+                    definition.name
+                ));
+            }
+        }
+        *self = next;
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PunchKind {
+    In,
+    BreakStart,
+    BreakEnd,
+    Out,
+}
+impl PunchKind {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::In => "Entrata",
+            Self::BreakStart => "Inizio pausa",
+            Self::BreakEnd => "Fine pausa",
+            Self::Out => "Uscita",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum WorkState {
+    Off,
+    Working,
+    Paused,
+}
+impl WorkState {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Off => "Fuori servizio",
+            Self::Working => "Al lavoro",
+            Self::Paused => "In pausa",
+        }
+    }
+    pub fn next(self, kind: PunchKind) -> Result<Self, String> {
+        match (self, kind) {
+            (Self::Off, PunchKind::In) => Ok(Self::Working),
+            (Self::Working, PunchKind::BreakStart) => Ok(Self::Paused),
+            (Self::Paused, PunchKind::BreakEnd) => Ok(Self::Working),
+            (Self::Working | Self::Paused, PunchKind::Out) => Ok(Self::Off),
+            _ => Err(
+                "Timbratura non valida per lo stato attuale. Aggiorna la pagina e riprova.".into(),
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Person {
+    pub id: String,
+    pub name: String,
+    pub initials: String,
+    pub department: String,
+    pub job: String,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Punch {
+    pub person_id: String,
+    pub kind: PunchKind,
+    pub timestamp: i64,
+    pub label: String,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Workspace {
+    pub tenant_id: String,
+    pub organization: String,
+    pub theme: String,
+    pub modules: ModuleSet,
+    pub people: Vec<Person>,
+    pub punches: Vec<Punch>,
+}
+impl Workspace {
+    pub fn authorize(&self, actor: &Actor) -> Result<(), String> {
+        if actor.tenant_id != self.tenant_id || !self.people.iter().any(|p| p.id == actor.person_id)
+        {
+            return Err("Accesso non autorizzato a questa azienda.".into());
+        }
+        Ok(())
+    }
+    pub fn state(&self, person: &str) -> WorkState {
+        match self
+            .punches
+            .iter()
+            .rev()
+            .find(|p| p.person_id == person)
+            .map(|p| p.kind)
+        {
+            Some(PunchKind::In | PunchKind::BreakEnd) => WorkState::Working,
+            Some(PunchKind::BreakStart) => WorkState::Paused,
+            _ => WorkState::Off,
+        }
+    }
+    pub fn set_module(&mut self, actor: &Actor, id: ModuleId, enabled: bool) -> Result<(), String> {
+        self.authorize(actor)?;
+        if actor.role != Role::Admin {
+            return Err("Solo un amministratore può configurare i moduli.".into());
+        }
+        if !enabled
+            && id == ModuleId::Attendance
+            && self
+                .people
+                .iter()
+                .any(|p| self.state(&p.id) != WorkState::Off)
+        {
+            return Err("Chiudi tutte le sessioni aperte prima di disattivare le presenze.".into());
+        }
+        self.modules.set(id, enabled)
+    }
+    pub fn punch(
+        &mut self,
+        actor: &Actor,
+        kind: PunchKind,
+        timestamp: i64,
+        label: String,
+    ) -> Result<(), String> {
+        self.authorize(actor)?;
+        if !self.modules.contains(ModuleId::Attendance) {
+            return Err("Il modulo presenze non è attivo.".into());
+        }
+        self.state(&actor.person_id).next(kind)?;
+        if self
+            .punches
+            .iter()
+            .rev()
+            .find(|p| p.person_id == actor.person_id)
+            .is_some_and(|p| p.timestamp > timestamp)
+        {
+            return Err("Orario precedente all'ultima timbratura.".into());
+        }
+        self.punches.push(Punch {
+            person_id: actor.person_id.clone(),
+            kind,
+            timestamp,
+            label,
+        });
+        Ok(())
+    }
+    /// Sum closed work intervals; an active interval is excluded until a pause/exit.
+    /// UTC timestamps make overnight work and clock offset changes unambiguous.
+    pub fn recorded_seconds(&self, person: &str) -> i64 {
+        let mut start = None;
+        let mut total = 0;
+        for event in self.punches.iter().filter(|p| p.person_id == person) {
+            match event.kind {
+                PunchKind::In | PunchKind::BreakEnd => start = Some(event.timestamp),
+                PunchKind::BreakStart | PunchKind::Out => {
+                    if let Some(value) = start.take() {
+                        total += (event.timestamp - value).max(0);
+                    }
+                }
+            }
+        }
+        total
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Snapshot {
+    pub workspace: Workspace,
+    pub actor_id: String,
+    pub catalog: Vec<ModuleDefinition>,
+    pub server_time: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn fixture() -> (Workspace, Actor) {
+        let actor = Actor {
+            tenant_id: "a".into(),
+            person_id: "me".into(),
+            role: Role::Admin,
+        };
+        let workspace = Workspace {
+            tenant_id: "a".into(),
+            organization: "Test".into(),
+            theme: "sage".into(),
+            modules: ModuleSet::preset("complete").unwrap(),
+            people: vec![Person {
+                id: "me".into(),
+                name: "Test".into(),
+                initials: "TE".into(),
+                department: "Test".into(),
+                job: "Test".into(),
+            }],
+            punches: vec![],
+        };
+        (workspace, actor)
+    }
+    #[test]
+    fn dependency_changes_are_atomic() {
+        let mut modules = ModuleSet::preset("complete").unwrap();
+        assert!(modules.set(ModuleId::Attendance, false).is_err());
+        assert!(modules.contains(ModuleId::Attendance));
+        modules.set(ModuleId::Reports, false).unwrap();
+        modules.set(ModuleId::Attendance, false).unwrap();
+        assert!(modules.set(ModuleId::Reports, true).is_err());
+        assert!(!modules.contains(ModuleId::Reports));
+    }
+    #[test]
+    fn full_shift_excludes_pause_and_handles_midnight() {
+        let (mut w, a) = fixture();
+        for (kind, timestamp) in [
+            (PunchKind::In, 82_800),
+            (PunchKind::BreakStart, 86_400),
+            (PunchKind::BreakEnd, 90_000),
+            (PunchKind::Out, 93_600),
+        ] {
+            w.punch(&a, kind, timestamp, "UTC".into()).unwrap();
+        }
+        assert_eq!(w.recorded_seconds("me"), 7_200);
+        assert_eq!(w.state("me"), WorkState::Off);
+    }
+    #[test]
+    fn double_entry_and_reversed_clock_are_rejected() {
+        let (mut w, a) = fixture();
+        w.punch(&a, PunchKind::In, 100, "UTC".into()).unwrap();
+        assert!(w.punch(&a, PunchKind::In, 101, "UTC".into()).is_err());
+        assert!(w.punch(&a, PunchKind::Out, 99, "UTC".into()).is_err());
+        assert_eq!(w.punches.len(), 1);
+    }
+    #[test]
+    fn foreign_tenant_and_employee_configuration_are_denied() {
+        let (mut w, mut a) = fixture();
+        a.tenant_id = "other".into();
+        assert!(w.punch(&a, PunchKind::In, 100, "UTC".into()).is_err());
+        a.tenant_id = "a".into();
+        a.role = Role::Employee;
+        assert!(w.set_module(&a, ModuleId::Reports, false).is_err());
+    }
+    #[test]
+    fn disabled_module_cannot_be_used_and_data_is_retained() {
+        let (mut w, a) = fixture();
+        w.punch(&a, PunchKind::In, 10, "UTC".into()).unwrap();
+        assert!(w.set_module(&a, ModuleId::Attendance, false).is_err());
+        w.punch(&a, PunchKind::Out, 20, "UTC".into()).unwrap();
+        w.set_module(&a, ModuleId::Reports, false).unwrap();
+        w.set_module(&a, ModuleId::Attendance, false).unwrap();
+        assert!(w.punch(&a, PunchKind::In, 30, "UTC".into()).is_err());
+        assert_eq!(w.punches.len(), 2);
+    }
+    #[test]
+    fn leaving_during_pause_does_not_count_pause_as_work() {
+        let (mut w, a) = fixture();
+        for (kind, timestamp) in [
+            (PunchKind::In, 0),
+            (PunchKind::BreakStart, 60),
+            (PunchKind::Out, 120),
+        ] {
+            w.punch(&a, kind, timestamp, "UTC".into()).unwrap();
+        }
+        assert_eq!(w.recorded_seconds("me"), 60);
+    }
+}

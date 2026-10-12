@@ -1,0 +1,57 @@
+[package]
+name = "hph"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+members = ["crates/hph-core"]
+resolver = "2"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+hph-core = { path = "crates/hph-core" }
+leptos = { version = "0.8", default-features = false }
+leptos_meta = { version = "0.8" }
+leptos_router = { version = "0.8" }
+serde = { version = "1", features = ["derive"] }
+axum = { version = "0.8", optional = true }
+leptos_axum = { version = "0.8", optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "signal"], optional = true }
+chrono = { version = "0.4", optional = true }
+toml = { version = "0.9", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+
+[features]
+hydrate = ["leptos/hydrate", "dep:wasm-bindgen", "dep:console_error_panic_hook"]
+ssr = ["dep:axum", "dep:leptos_axum", "dep:tokio", "dep:chrono", "dep:toml", "leptos/ssr", "leptos_meta/ssr", "leptos_router/ssr"]
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+serde_json = "1"
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[package.metadata.leptos]
+output-name = "hph"
+site-root = "target/site"
+site-pkg-dir = "pkg"
+style-file = "style/main.css"
+assets-dir = "public"
+site-addr = "127.0.0.1:3000"
+reload-port = 3001
+env = "DEV"
+bin-features = ["ssr"]
+bin-default-features = false
+lib-features = ["hydrate"]
+lib-default-features = false
+lib-profile-release = "wasm-release"

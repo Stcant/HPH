@@ -1,39 +1,52 @@
 # HPH — Mappa del progetto
 
 ## Requisiti confermati
-- Progetto personale dell'utente: gestionale aziendale con timbrature e presenze, estendibile ad altre funzioni aziendali.
-- Linguaggio richiesto: Rust. Estensione al frontend ancora da chiarire.
+- Progetto personale dell'utente: gestionale aziendale con timbrature e presenze, estendibile a ulteriori funzioni.
+- Template riutilizzabile: ciascuna installazione/azienda deve poter scegliere i moduli.
+- Dopo iniziale libertà tecnologica, l'utente ha espresso preferenza per tutta l'applicazione in Rust. Scelta adottata: Rust frontend e backend.
 - Qualità estetica e cura dell'esperienza utente sono requisiti centrali.
-- Repository: https://github.com/consteuni/HPH, privata; branch predefinito main.
+- Repository privata: https://github.com/consteuni/HPH, branch main. Nessuna pubblicazione richiesta.
 
-## Stato delle conoscenze
-Ispezione remota del 2026-10-12: repository iniziale con README.md; nessuna applicazione o architettura implementata osservata. Questa mappa descrive una proposta, non funzionalità disponibili.
-
-## Prima versione proposta — da validare
-| Area | Flusso |
+## Decisioni architetturali
+| Area | Scelta e motivo |
 | --- | --- |
-| Azienda e persone | Dipendenti, reparti, sedi e ruoli dipendente/responsabile/amministratore |
-| Timbrature | Entrata, uscita, pause e riepilogo personale |
-| Presenze | Vista giornaliera e mensile, ore registrate e anomalie |
-| Assenze | Richiesta ferie/permessi, approvazione e calendario |
-| Amministrazione | Riepiloghi ed esportazione dei dati presenze |
+| Frontend | Leptos 0.8, SSR + hydration WASM: componenti e contratti in Rust, una sola applicazione |
+| HTTP | Axum 0.8 + Tokio, integrazione ufficiale Leptos |
+| Organizzazione | Monolite modulare: un deploy, regole indipendenti in hph-core, niente microservizi iniziali |
+| Moduli | Catalogo tipizzato, dipendenze dichiarate e abilitazione controllata sul server |
+| Configurazione | hph.toml per nome azienda, tema e preset iniziale; interfaccia per attivazioni della sessione demo |
+| Design | CSS con token, verde salvia e alternativa indigo; sidebar, card, tabelle e layout responsive |
+| Persistenza futura | PostgreSQL + SQLx: scelta per la fase di identità/persistenza, non presente nel codice attuale |
+| Identità futura | Sessioni autenticate e membership aziendale sul server, ruolo e permessi per operazione; provider da selezionare |
 
-Prima sezione funzionante proposta: accesso con ruoli, registrazione entrata/uscita, visualizzazione delle proprie presenze e controllo autorizzato del responsabile.
+Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM e un ecosistema UI meno ampio rispetto a React. Leptos genera un loader JavaScript; il codice applicativo resta Rust. Non promettere assenza assoluta di JavaScript nel browser.
 
-## Direzione visiva proposta
-Web app responsive, desktop per amministrazione e mobile per dipendenti. Tipografia leggibile, spaziatura generosa, palette coerente, tabelle curate, calendario chiaro e dashboard con dati operativi. Disegnare anche stati vuoti, caricamento, errori e conferme; navigazione da tastiera, focus visibile e informazioni non affidate al solo colore. Tema, riferimenti grafici e piattaforma sono ancora da scegliere.
+## Implementazione iniziale
+- `crates/hph-core/src/lib.rs`: catalogo e dipendenze, identità del dominio, macchina a stati delle timbrature, calcolo di intervalli chiusi e test.
+- `src/app.rs`: dashboard, anagrafica dimostrativa, timbrature, report, configurazione moduli e componenti condivisi.
+- `src/api.rs`: server function snapshot, configurazione e timbratura. L'identità dell'attore viene dal contesto server.
+- `src/server.rs`: configurazione, stato demo in memoria, router Axum e test HTTP/SSR.
+- `src/main.rs`: avvio esclusivamente con HPH_DEMO=true e ascolto loopback.
+- `style/main.css`: estetica, token e adattamento mobile; nessun font o asset remoto richiesto.
+- `Cargo.lock`: versioni risolte; `rust-toolchain.toml`: toolchain e target.
+- `.github/workflows/ci.yml`: formattazione, test SSR e controllo WASM.
 
-## Confini tecnici da definire
-- Rust per backend oppure anche per interfaccia; framework e database non selezionati.
-- Singola azienda oppure prodotto multi-azienda con isolamento dei dati.
-- Web/mobile browser come proposta, app native o terminali fisici non confermati.
-- Orari, fusi, turni notturni, pause e correzioni devono avere regole esplicite prima di implementare il relativo calcolo.
-- Proposta: controlli dei permessi sul server, registrazione delle rettifiche senza cancellare la storia, prevenzione di timbrature duplicate.
-- Usare dati sintetici durante sviluppo e dimostrazioni.
+## Moduli
+Core sempre attivo. Persone contiene profili sintetici in sola lettura. Presenze dipende da Persone; Report dipende da Presenze. I moduli si disattivano senza cancellare eventi; sessioni aperte impediscono la disattivazione di Presenze. Report mostra il tempo degli intervalli chiusi della sessione, pause escluse.
 
-## Evoluzione candidata, non approvata
-Turni, documenti, note spese, progetti/commesse, clienti, fatturazione, magazzino e integrazioni. Calcolo paghe e contabilità non fanno parte della prima versione proposta e richiedono requisiti specifici.
+## Confini attuali
+Questa è una demo locale con un'azienda e un attore amministratore fisso. Non ci sono login, ruoli selezionabili, database o isolamento HTTP di più aziende. Il tenant è modellato e testato nel dominio, ma questo non prova un servizio multi-azienda sicuro. Dati e modifiche ai moduli si azzerano al riavvio. Aggiornamento tra schede manuale.
+
+Il percorso verso più aziende richiede membership verificata, scope tenant obbligatorio su query/mutazioni, migrazioni, vincoli e test di isolamento nel database. Nessun dato reale prima di questa fase.
+
+Timestamp UTC, orologio del server e sequenze validate. Calendario aziendale, fuso di visualizzazione, regole contrattuali, arrotondamenti, rettifiche/audit e idempotenza di richieste ritentate richiedono implementazione dedicata.
+
+## Evoluzione del prodotto
+Primo flusso operativo target: autenticazione, anagrafica reale, timbrature persistenti e controllo del responsabile. Poi ferie/permessi e calendario presenze. Turni, documenti, note spese, commesse, clienti, fatturazione, magazzino e integrazioni rimangono moduli candidati. Paghe e contabilità richiedono specifiche autonome.
 
 ## Lettura
-- [Stato operativo](PROJECT_STATE.md): attività corrente, verifiche e prossimo passo.
-- [README](../README.md): documento iniziale della repository.
+- [Stato operativo](PROJECT_STATE.md): evidenza e prossimo passo.
+- [Avvio e limiti](../README.md).
+- [Contratto dei moduli](../docs/MODULES.md).
+
+Riferimenti primari consultati: https://book.leptos.dev/getting_started/index.html ; https://book.leptos.dev/ssr/21_cargo_leptos.html ; https://github.com/leptos-rs/start-axum ; https://docs.rs/axum/latest/axum/ ; https://www.postgresql.org/docs/current/ddl-rowsecurity.html .
