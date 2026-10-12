@@ -160,17 +160,16 @@ mod tests {
 
     #[test]
     fn explicit_company_modules_override_preset_and_invalid_lists_fail() {
-        let state = DemoState::new(Config {
-            organization: "Custom Company".into(),
-            theme: "sage".into(),
-            preset: "essential".into(),
-            modules: Some(vec![
-                ModuleId::People,
-                ModuleId::Attendance,
-                ModuleId::Reports,
-            ]),
-        })
+        let config: Config = toml::from_str(
+            r#"
+                organization = "Custom Company"
+                theme = "sage"
+                preset = "essential"
+                modules = ["people", "attendance", "reports"]
+            "#,
+        )
         .unwrap();
+        let state = DemoState::new(config).unwrap();
         assert!(
             state
                 .workspace
@@ -180,13 +179,16 @@ mod tests {
                 .contains(ModuleId::Reports)
         );
 
-        let invalid = DemoState::new(Config {
-            organization: "Invalid Company".into(),
-            theme: "sage".into(),
-            preset: "complete".into(),
-            modules: Some(vec![ModuleId::Reports]),
-        });
-        assert!(invalid.is_err());
+        let invalid: Config = toml::from_str(
+            r#"
+                organization = "Invalid Company"
+                theme = "sage"
+                preset = "complete"
+                modules = ["reports"]
+            "#,
+        )
+        .unwrap();
+        assert!(DemoState::new(invalid).is_err());
     }
 
     #[tokio::test]
