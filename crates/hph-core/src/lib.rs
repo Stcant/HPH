@@ -80,7 +80,10 @@ impl ModuleSet {
         }
 
         let modules = Self { enabled };
-        for definition in catalog().iter().filter(|module| modules.contains(module.id)) {
+        for definition in catalog()
+            .iter()
+            .filter(|module| modules.contains(module.id))
+        {
             if definition
                 .dependencies
                 .iter()

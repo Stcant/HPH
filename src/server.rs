@@ -171,7 +171,14 @@ mod tests {
             ]),
         })
         .unwrap();
-        assert!(state.workspace.lock().unwrap().modules.contains(ModuleId::Reports));
+        assert!(
+            state
+                .workspace
+                .lock()
+                .unwrap()
+                .modules
+                .contains(ModuleId::Reports)
+        );
 
         let invalid = DemoState::new(Config {
             organization: "Invalid Company".into(),
