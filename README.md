@@ -51,7 +51,10 @@ Modificare `hph.toml` e riavviare il server:
 organization = "La tua azienda"
 theme = "sage"       # sage | indigo
 preset = "team"      # essential | team | complete
+# modules = ["people", "attendance"] # opzionale: sovrascrive preset
 ```
+
+`modules` è facoltativo e accetta gli ID `people`, `attendance` e `reports`. I moduli devono includere le proprie dipendenze; HPH rifiuta una configurazione non valida all'avvio. Se `modules` è omesso, usa il preset. Le scelte iniziali in `hph.toml` restano salvate; le attivazioni fatte dall'interfaccia demo valgono solo fino al riavvio.
 
 | Preset | Moduli |
 | --- | --- |

@@ -3,8 +3,8 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Attività corrente: allineamento del repository trasferito e definizione della personalizzazione per azienda. Il primo template full-stack è **implemented**; QA browser ancora mancante. Il gestionale completo è lavoro aperto.
-Checkpoint originario: 2026-10-12. Aggiornamento puntamenti e direzione prodotto: 2026-10-13. Repository privata Stcant/HPH; branch chore/update-repository-owner. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
+Attività corrente: supportare liste di moduli aziendali personalizzate in hph.toml, oltre ai preset. Stato: **in_progress** fino all'esito CI. Il primo template full-stack resta implemented; QA browser ancora mancante.
+Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository privata Stcant/HPH; branch chore/update-repository-owner. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
 
 ## Decisioni
 Leptos + Axum; core di dominio indipendente; catalogo e dipendenze dei moduli; CSS responsive e temi; PostgreSQL + SQLx previsti per la fase successiva. La selezione dei moduli è configurazione aziendale: persistente per organizzazione e verificata sul server; il modello di deploy (istanza dedicata o multi-azienda) resta aperto. Dettagli e confini in [PROJECT_MAP.md](PROJECT_MAP.md).
@@ -40,7 +40,7 @@ La demo perde dati e configurazioni interattive al riavvio. I profili sono sinte
 Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
 
 ## Prossima azione
-Eseguire la demo in un browser e validare interazioni/resa desktop e mobile; poi implementare identità, membership e PostgreSQL con configurazione moduli per organizzazione, test di persistenza al riavvio e isolamento tra due organizzazioni. La rete dell'ambiente corrente blocca il clone locale, quindi build e browser QA richiedono un checkout locale o CI.
+Verificare via CI il nuovo override modules in hph.toml; poi fare QA browser e iniziare identità, membership e PostgreSQL con configurazione runtime per organizzazione e test di isolamento tra due organizzazioni. Il clone locale non è disponibile in questo ambiente.
 
 ## File e lettura
 Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.

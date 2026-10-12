@@ -1,5 +1,9 @@
 # Local demonstration only. No credentials or real employee data.
 organization = "Studio Aurora"
 theme = "sage"
-# Supported presets: essential, team, complete
+# Fallback preset: essential, team, complete
 preset = "team"
+
+# Optional: choose a company-specific combination; this overrides preset.
+# IDs: people, attendance, reports. Dependencies are validated at startup.
+# modules = ["people", "attendance", "reports"]

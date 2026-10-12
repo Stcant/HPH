@@ -10,6 +10,12 @@ Il core è sempre presente. I moduli attuali formano una catena: Persone → Pre
 
 Disabilitare un modulo deve interromperne le operazioni protette e nascondere le schermate applicabili, **senza eliminare i dati**. Le sessioni di timbratura aperte impediscono di disattivare Presenze.
 
+## Personalizzare una singola installazione aziendale
+
+In `hph.toml` si può impostare `modules` come lista esplicita di ID (`people`, `attendance`, `reports`). La lista opzionale sostituisce `preset` e viene validata all'avvio: dipendenze mancanti o ID duplicati fanno rifiutare la configurazione. L'esempio commentato è in `hph.toml`.
+
+Questa è una configurazione iniziale persistente per l'installazione dell'azienda. Le modifiche dalla schermata demo sono ancora temporanee e si azzerano al riavvio; la persistenza delle impostazioni runtime per organizzazione arriverà con il database.
+
 ## Aggiungere un modulo
 
 1. Aggiungere un identificatore tipizzato a `ModuleId` e una definizione in `catalog()` con dipendenze esplicite. Non creare cicli.

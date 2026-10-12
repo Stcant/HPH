@@ -15,7 +15,7 @@
 | HTTP | Axum 0.8 + Tokio, integrazione ufficiale Leptos |
 | Organizzazione | Monolite modulare: un deploy, regole indipendenti in hph-core, niente microservizi iniziali |
 | Moduli | Catalogo tipizzato, dipendenze dichiarate e abilitazione controllata sul server; configurazione persistente per azienda nel prossimo incremento |
-| Configurazione | hph.toml per nome azienda, tema e preset iniziale; interfaccia per attivazioni della sessione demo |
+| Configurazione | hph.toml per azienda, tema, preset o lista esplicita di moduli; le modifiche runtime demo sono temporanee |
 | Design | CSS con token, verde salvia e alternativa indigo; sidebar, card, tabelle e layout responsive |
 | Persistenza futura | PostgreSQL + SQLx: organizzazione, membership, dati e configurazione moduli scoped per azienda; non presente nel codice attuale |
 | Identità futura | Sessioni autenticate e membership aziendale sul server, ruolo e permessi per operazione; provider da selezionare |
@@ -33,6 +33,7 @@ Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM
 - `.github/workflows/ci.yml`: formattazione, test SSR e controllo WASM.
 
 ## Moduli
+La configurazione iniziale dell'azienda può usare un preset o una lista esplicita validata in hph.toml; la UI può cambiare la selezione durante la demo. In produzione la configurazione runtime deve essere persistita e autorizzata per organizzazione.
 Core sempre attivo. Persone contiene profili sintetici in sola lettura. Presenze dipende da Persone; Report dipende da Presenze. I moduli si disattivano senza cancellare eventi; sessioni aperte impediscono la disattivazione di Presenze. Report mostra il tempo degli intervalli chiusi della sessione, pause escluse.
 
 ## Confini attuali
