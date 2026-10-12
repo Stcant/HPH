@@ -23,7 +23,7 @@ Il codice applicativo è Rust. Il browser usa anche CSS e il piccolo loader Java
 Prerequisiti: Git e Rust tramite [rustup](https://rustup.rs). Il file `rust-toolchain.toml` installa target WebAssembly e componenti richiesti.
 
 ```bash
-git clone https://github.com/consteuni/HPH.git
+git clone https://github.com/Stcant/HPH.git
 cd HPH
 cargo install cargo-leptos --version 0.3.11 --locked
 HPH_DEMO=true cargo leptos watch
@@ -60,6 +60,8 @@ preset = "team"      # essential | team | complete
 | complete | Persone + Timbrature e presenze + Report |
 
 I moduli sono composizioni del codice Rust compilato. L'amministratore può abilitarli o disabilitarli nell'interfaccia; aggiungere una nuova funzione richiede codice e una nuova build. Non è un marketplace di plugin caricati da terze parti.
+
+La configurazione dei moduli appartiene all'azienda: ogni workspace compone HPH scegliendo ciò che serve ai propri processi. Nella demo le attivazioni restano in memoria e si azzerano al riavvio; la configurazione persistente per azienda è parte del prossimo incremento PostgreSQL.
 
 La base può essere clonata/forkata e personalizzata. La creazione del codice riutilizzabile non imposta automaticamente il flag **Template repository** nelle impostazioni GitHub.
 
