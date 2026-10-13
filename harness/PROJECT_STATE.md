@@ -3,7 +3,7 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: risoluzione dell'attore attraverso membership aziendali attive. Stato: **verified** sul commit 8097d605f6ed95547dec2688cd03ce61c09ee6e3. Il progetto complessivo resta in_progress; QA browser ancora mancante.
+Incremento corrente: schema PostgreSQL aziendale e test automatico RLS. Stato: **in verifica CI** sul branch feat/company-membership-resolution. Il progetto complessivo resta in_progress; QA browser ancora mancante.
 Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/company-membership-resolution. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
 
 ## Decisioni
@@ -55,6 +55,18 @@ Scope: contratti di dominio per identità utente e membership attiva per azienda
 
 Le membership restano in memoria nella demo. L'identità verificata deve arrivare da un middleware di autenticazione e la membership dovrà essere letta dal database prima delle operazioni aziendali.
 
+## Incremento: schema PostgreSQL multi-azienda — 2026-10-13
+
+Scope: organizzazioni, identità esterne, persone, membership, moduli configurati e timbrature idempotenti; Row-Level Security scoped per azienda. Il repository SQL non è ancora integrato nell'app Rust.
+
+| Criterio | Risultato | Evidenza |
+| --- | --- | --- |
+| Dati aziendali e coerenza tra organizzazioni | PASS | FK composte legano membership/persona e timbrature/persona alla stessa organizzazione; vincoli univoci e chiave idempotente per timbratura |
+| Letture scoped, membership proprie e blocco insert/update/delete cross-company | PENDING | Script `migrations/tests/tenant_isolation.sql` eseguito contro PostgreSQL 18 in CI |
+| Test Rust, formattazione e check WASM | PASS | Nessun sorgente Rust modificato; ultimo check verde sul commit `791db7fe906203df3a682d407de0cb062183b43e` |
+
+La runtime app dovrà impostare `hph.tenant_id` e `hph.user_id` transazionalmente, verificare membership e ruoli nel servizio e usare un ruolo non proprietario senza `BYPASSRLS`; questo schema da solo non prova la sicurezza delle operazioni HTTP.
+
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
 - Il rendering SSR dei componenti profondamente annidati produceva uno stack overflow. Confini dei componenti resi AnyView; successivamente tutti i 9 test sono passati con la configurazione standard, senza aumentare lo stack.
@@ -64,7 +76,7 @@ La demo perde dati e configurazioni interattive al riavvio. I profili sono sinte
 Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
 
 ## Prossima azione
-Eseguire QA browser desktop/mobile con un checkout locale. Poi aggiungere autenticazione e sessioni reali, persistenza PostgreSQL di identità/membership/configurazione/dati, e test di isolamento tra due organizzazioni. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
+Integrare le migrazioni con SQLx, il pool PostgreSQL e i repository applicativi; mantenere test end-to-end di isolamento tra due organizzazioni. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
 
 ## File e lettura
 Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.
