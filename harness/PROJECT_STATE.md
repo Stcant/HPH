@@ -3,7 +3,7 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: repository SQLx per la membership persistita; **verified** sul branch `feat/persisted-membership-repository`. La PR #7 ha superato la CI, con lookup tenant-scoped e rifiuto delle membership assenti o revocate sotto RLS. PR #6 è integrata in `main` con merge `231762216f4582e5e7ffe0550497d975f7f153c6`; Actions run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) verde sul commit `85573ff444bebe43d7a09da848bd08a80608b601`. Il progetto complessivo resta in progress; autenticazione e QA browser mancano.
+Ultimo incremento completato: repository SQLx per la membership persistita, **verified** e integrato in `main` con PR #7, merge `812a5bb21b232039151dd375b4671d019588e284`. Run CI [38466818515](https://github.com/Stcant/HPH/actions/runs/38466818515) verde: job `checks` e `database`; lookup tenant-scoped e rifiuto delle membership assenti o revocate sotto RLS. PR #6 è integrata in `main` con merge `231762216f4582e5e7ffe0550497d975f7f153c6`; Actions run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) verde sul commit `85573ff444bebe43d7a09da848bd08a80608b601`. Il progetto complessivo resta in progress; autenticazione e QA browser mancano.
 Checkpoint originario: 2026-10-12. Repository pubblica `Stcant/HPH` (portfolio). Lavoro e verifiche eseguiti tramite GitHub; clone locale e test locali non disponibili in questo ambiente. CI GitHub è il gate eseguibile.
 
 ## Decisioni
