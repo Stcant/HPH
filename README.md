@@ -13,7 +13,7 @@ HPH è attualmente una **demo locale eseguibile**, non un gestionale pronto per 
 | Regole condivise | Crate indipendente `hph-core` |
 | Design | CSS responsive con token; temi sage e indigo, nessun font remoto |
 | Build | cargo-leptos 0.3.11, Cargo.lock versionato |
-| Persistenza attuale | Memoria del server, esclusivamente per la demo |
+| Persistenza attuale | PostgreSQL/SQLx per infrastruttura e repository; l'interfaccia usa ancora memoria demo |
 | Persistenza prevista | PostgreSQL + SQLx, da implementare insieme all'identità aziendale |
 
 Il codice applicativo è Rust. Il browser usa anche CSS e il piccolo loader JavaScript generato da wasm-bindgen/Leptos: non serve mantenere una seconda applicazione React o TypeScript. Non sono richiesti Node o npm.
@@ -106,4 +106,4 @@ I test del dominio coprono dipendenze, permessi, azienda errata, doppia entrata,
 - `docs/MODULES.md`: contratto per estendere il template.
 - `harness/PROJECT_MAP.md` e `harness/PROJECT_STATE.md`: architettura e checkpoint.
 
-Il prossimo incremento è **persistenza applicativa**: repository SQLx per membership, persone, timbrature e configurazione moduli, poi autenticazione e autorizzazioni reali. Fino ad allora HPH resta una demo locale e non deve ospitare dati aziendali reali.
+Il prossimo incremento è **autenticazione e sessioni**: il repository SQLx risolve già la membership attiva dell'utente nell'azienda selezionata, ma le schermate non lo usano ancora. Fino all'integrazione di autenticazione, autorizzazione e persistenza applicativa, HPH resta una demo locale e non deve ospitare dati aziendali reali.
