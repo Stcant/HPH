@@ -4,7 +4,7 @@
 
 Build a reusable modular business management application with a Rust frontend/backend and a carefully designed interface. The preference for Rust on the frontend supersedes the open frontend choice from the kickoff.
 
-Current increment: English throughout the repository and interface, plus a recruiter Easter egg in the README. Status: **implemented**, awaiting CI on `chore/english-language`. Scope: interface and accessibility text, domain/server errors, English HTML language, unambiguous UTC date display, documentation and existing SSR assertions. Acceptance: English content across maintained files, a readable expandable README note, and passing formatting/SSR/WASM/PostgreSQL checks. No authentication or persistence behavior changes are included.
+Current increment: English throughout the repository and interface, plus a recruiter Easter egg in the README. Status: **verified** in PR #8 on `chore/english-language`; merge follows the final checkpoint checks. Scope: interface and accessibility text, domain/server errors, English HTML language, unambiguous UTC date display, documentation and existing SSR assertions. Acceptance: English content across maintained files, a readable expandable README note, and passing formatting/SSR/WASM/PostgreSQL checks. No authentication or persistence behavior changes are included.
 
 Previous completed increment: persisted membership SQLx repository, **verified** and integrated into `main` by PR #7, merge `812a5bb21b232039151dd375b4671d019588e284`. CI run [38466818515](https://github.com/Stcant/HPH/actions/runs/38466818515) passed both `checks` and `database`, including tenant-scoped lookup and rejection of missing or revoked memberships under RLS. PR #6 was integrated with merge `231762216f4582e5e7ffe0550497d975f7f153c6`; run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) passed on commit `85573ff444bebe43d7a09da848bd08a80608b601`. Post-merge CI [38467158574](https://github.com/Stcant/HPH/actions/runs/38467158574) passed on `1d58132cba643ba740804275056b6c22fca15050`, the base of this language change. The overall project remains in progress; authentication and browser QA are still missing.
 
@@ -124,6 +124,18 @@ Scope: MembershipRepository::resolve_actor(user_id, tenant_id) resolves an actor
 | Missing membership in a tenant and revoked membership are rejected | PASS | Dedicated integration test; [run 38466596064](https://github.com/Stcant/HPH/actions/runs/38466596064) |
 | Formatting, SSR tests, WASM and PostgreSQL checks | PASS | checks and database jobs in [run 38466596064](https://github.com/Stcant/HPH/actions/runs/38466596064), tested commit `a5617a2e8f68f647feb8a1b07fc379d1776292c8` |
 
+## Increment: English language and recruiter Easter egg — 2026-10-13
+
+Source commit: `2a21a36cd0700a0c066a971228508b56758f710b`, PR #8. [CI run 38468961276](https://github.com/Stcant/HPH/actions/runs/38468961276) passed both jobs.
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| English UI, errors, accessibility and maintained documentation | PASS | Source review; existing SSR page test checks English content and `lang="en"` |
+| Formatting, workspace/SSR tests and WASM compilation | PASS | `checks` job in run 38468961276 |
+| PostgreSQL migrations, RLS and repository integration | PASS | `database` job in the same run |
+| Expandable recruiter note | PASS | README source contains the recruiter side quest and contact link |
+| Visual layout and browser interaction | NOT RUN | No browser QA in this increment |
+
 ## Relevant resolved problems
 
 - An executor interruption invalidated an initial test run; valid results came from subsequent executions.
@@ -137,7 +149,7 @@ Leave, time off, shifts, employee CRUD, corrections/audit, application-level ide
 
 ## Next action
 
-Complete English-content review and CI, then merge the language PR. The next functional increment remains provider-neutral authentication/sessions and connecting session context to repositories; do not use the demo actor for tenant-scoped SQL. Then implement people and attendance repositories. Run desktop/mobile browser QA when an executable build and browser environment are available. A local source snapshot is available, but Rust verification still runs through GitHub CI.
+Merge PR #8 after the final checkpoint checks. The next functional increment remains provider-neutral authentication/sessions and connecting session context to repositories; do not use the demo actor for tenant-scoped SQL. Then implement people and attendance repositories. Run desktop/mobile browser QA when an executable build and browser environment are available. A local source snapshot is available, but Rust verification still runs through GitHub CI.
 
 ## Files and reading order
 
