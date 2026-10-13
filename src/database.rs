@@ -36,7 +36,10 @@ impl Database {
 
     /// Check that PostgreSQL is reachable without exposing connection details.
     pub async fn ping(&self) -> Result<(), sqlx::Error> {
-        sqlx::query("SELECT 1").execute(&self.pool).await.map(|_| ())
+        sqlx::query("SELECT 1")
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
     }
 
     /// Start a transaction scoped to a previously verified user and organization.
@@ -91,13 +94,11 @@ mod tests {
             .await
             .unwrap();
 
-        let tenant_context: Option<Uuid> =
-            sqlx::query_scalar("SELECT hph_current_tenant_id()")
+        let tenant_context: Option<Uuid> = sqlx::query_scalar("SELECT hph_current_tenant_id()")
                 .fetch_one(&mut *transaction)
                 .await
                 .unwrap();
-        let user_context: Option<Uuid> =
-            sqlx::query_scalar("SELECT hph_current_user_id()")
+        let user_context: Option<Uuid> = sqlx::query_scalar("SELECT hph_current_user_id()")
                 .fetch_one(&mut *transaction)
                 .await
                 .unwrap();
