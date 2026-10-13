@@ -104,8 +104,8 @@ Il primo test del repository usava una connessione superuser e quindi non eserci
 
 | Criterio | Risultato | Evidenza |
 | --- | --- | --- |
-| Repository testato sotto RLS effettiva | PENDING | Nuova configurazione CI e test aggiunti; attendere Actions |
-| Formattazione, test SSR e check WASM | PENDING | Branch `test/non-owner-module-repository` |
+| Repository testato sotto RLS effettiva | PASS | Test `company_module_selection_is_tenant_scoped_and_admin_only` eseguito con ruolo runtime `NOSUPERUSER NOBYPASSRLS`; Actions run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093), commit testato `85573ff444bebe43d7a09da848bd08a80608b601` |
+| Formattazione, test SSR e check WASM | PASS | Job `checks` del run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) superato |
 
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
@@ -116,7 +116,7 @@ La demo perde dati e configurazioni interattive al riavvio. I profili sono sinte
 Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
 
 ## Prossima azione
-Dopo aver confermato il test RLS con ruolo runtime non proprietario, introdurre sessione autenticata e membership persistita, poi collegare il repository moduli all'API; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
+Dopo il test RLS con ruolo runtime non proprietario, introdurre sessione autenticata e membership persistita, poi collegare il repository moduli all'API; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
 
 ## File e lettura
 Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.
