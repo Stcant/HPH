@@ -3,7 +3,7 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: pool SQLx, migrazioni PostgreSQL e contesto tenant transazionale. Stato: **verified** sul commit 6b3964a4acef3b1241ead813f2980c9b9a140cba; run CI 38460315357 riuscito. Il progetto complessivo resta in_progress; QA browser ancora mancante.
+Incremento corrente: repository SQLx per la configurazione dei moduli aziendali. Stato: **in progress**, test PostgreSQL aggiunto al workflow CI; attendere l'esito. Il commit precedente SQLx è stato integrato in main con PR #4 (merge `e7b2d634fd119fbba74c64e60e1d187a5e4546cd`). Il progetto complessivo resta in_progress; QA browser ancora mancante.
 Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/sqlx-database-foundation. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
 
 ## Decisioni
@@ -88,6 +88,16 @@ Scope verificato: pool PostgreSQL SQLx per il server SSR; migrator separabile co
 | Tenant e user context sono transaction-local | PASS | Il test legge entrambi i valori nella transazione e verifica il tenant nullo dopo il commit |
 | CI Rust, SSR, WASM e RLS preesistente | PASS | Job `checks` e `database` del run [38460315357](https://github.com/Stcant/HPH/actions/runs/38460315357) sul commit `6b3964a4acef3b1241ead813f2980c9b9a140cba` |
 
+## Incremento: repository SQLx per moduli aziendali — 2026-10-13
+
+Aggiunto `src/module_repository.rs`: lettura tenant-scoped per membership attiva; scrittura atomica di tutti i flag, validazione dipendenze e controllo admin nella stessa transazione. Una selezione non ancora salvata è restituita come `None`; l'integrazione UI è rinviata finché l'identità demo sintetica non viene sostituita da UUID verificati di una sessione autenticata.
+
+| Criterio | Risultato | Evidenza |
+| --- | --- | --- |
+| Repository limita query e scritture al tenant tramite contesto RLS | PENDING | Test PostgreSQL `company_module_selection_is_tenant_scoped_and_admin_only` aggiunto al job database |
+| Solo membership admin attiva può salvare la configurazione | PENDING | Verifica integrata nello stesso test PostgreSQL |
+| Formattazione, test SSR e check WASM | PENDING | Attendere GitHub Actions del branch `feat/company-module-repository` |
+
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
 - Il rendering SSR dei componenti profondamente annidati produceva uno stack overflow. Confini dei componenti resi AnyView; successivamente tutti i 9 test sono passati con la configurazione standard, senza aumentare lo stack.
@@ -97,7 +107,7 @@ La demo perde dati e configurazioni interattive al riavvio. I profili sono sinte
 Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
 
 ## Prossima azione
-Integrare autenticazione e sessioni verificate; aggiungere repository SQLx per membership, persone, presenze e configurazione dei moduli, sostituendo gradualmente lo stato demo. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
+Collegare il repository moduli all'API solo dopo aver introdotto sessione autenticata e membership persistita; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
 
 ## File e lettura
 Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.
