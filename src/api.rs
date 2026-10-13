@@ -7,7 +7,7 @@ pub async fn get_snapshot() -> Result<Snapshot, ServerFnError> {
     let workspace = state
         .workspace
         .lock()
-        .map_err(|_| ServerFnError::new("Stato temporaneamente non disponibile."))?;
+        .map_err(|_| ServerFnError::new("State is temporarily unavailable."))?;
     workspace
         .authorize(&state.actor)
         .map_err(ServerFnError::new)?;
@@ -20,7 +20,7 @@ pub async fn configure_module(id: ModuleId, enabled: bool) -> Result<(), ServerF
     let mut workspace = state
         .workspace
         .lock()
-        .map_err(|_| ServerFnError::new("Stato temporaneamente non disponibile."))?;
+        .map_err(|_| ServerFnError::new("State is temporarily unavailable."))?;
     workspace
         .set_module(&state.actor, id, enabled)
         .map_err(ServerFnError::new)
@@ -33,13 +33,13 @@ pub async fn register_punch(kind: PunchKind) -> Result<(), ServerFnError> {
     let mut workspace = state
         .workspace
         .lock()
-        .map_err(|_| ServerFnError::new("Stato temporaneamente non disponibile."))?;
+        .map_err(|_| ServerFnError::new("State is temporarily unavailable."))?;
     workspace
         .punch(
             &state.actor,
             kind,
             now.timestamp(),
-            now.format("%d/%m %H:%M:%S UTC").to_string(),
+            now.format("%Y-%m-%d %H:%M:%S UTC").to_string(),
         )
         .map_err(ServerFnError::new)
 }

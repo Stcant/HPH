@@ -10,7 +10,7 @@ use leptos_router::{
 pub fn shell(options: LeptosOptions) -> AnyView {
     view! {
         <!DOCTYPE html>
-        <html lang="it">
+        <html lang="en">
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -30,9 +30,9 @@ pub fn App() -> AnyView {
     provide_meta_context();
     view! {
         <Stylesheet id="leptos" href="/pkg/hph.css"/>
-        <Title text="HPH — Il lavoro, in armonia"/>
+        <Title text="HPH — Work, in harmony"/>
         <Router>
-            <Routes fallback=|| view! { <main class="empty"><h1>"Questa pagina non esiste"</h1><a href="/">"Torna a HPH"</a></main> }>
+            <Routes fallback=|| view! { <main class="empty"><h1>"This page does not exist"</h1><a href="/">"Back to HPH"</a></main> }>
                 <Route path=StaticSegment("") view=WorkspacePage/>
             </Routes>
         </Router>
@@ -50,11 +50,11 @@ enum Screen {
 impl Screen {
     fn title(self) -> &'static str {
         match self {
-            Self::Overview => "Panoramica",
-            Self::People => "Persone",
-            Self::Attendance => "Presenze",
-            Self::Reports => "Report",
-            Self::Modules => "Il tuo workspace",
+            Self::Overview => "Overview",
+            Self::People => "People",
+            Self::Attendance => "Attendance",
+            Self::Reports => "Reports",
+            Self::Modules => "Your workspace",
         }
     }
 }
@@ -83,10 +83,7 @@ fn dispatch(
         };
         match result {
             Ok(()) => {
-                message.set(Some((
-                    true,
-                    "Modifica registrata nella sessione demo.".into(),
-                )));
+                message.set(Some((true, "Change saved for this demo session.".into())));
                 refresh.run(());
             }
             Err(error) => message.set(Some((false, error.to_string()))),
@@ -103,11 +100,11 @@ fn WorkspacePage() -> AnyView {
     let message = RwSignal::new(None::<(bool, String)>);
     let refresh = Callback::new(move |()| snapshot.refetch());
     view! {
-        <a class="skip" href="#main">"Vai al contenuto"</a>
-        <Suspense fallback=|| view! { <main class="empty" role="status"><div class="brand-mark">"h"</div><h1>"Prepariamo il tuo workspace…"</h1></main> }>
+        <a class="skip" href="#main">"Skip to content"</a>
+        <Suspense fallback=|| view! { <main class="empty" role="status"><div class="brand-mark">"h"</div><h1>"Getting your workspace ready…"</h1></main> }>
             {move || snapshot.get().map(|result| match result {
                 Ok(data) => view! { <WorkspaceView data screen busy message refresh/> }.into_any(),
-                Err(error) => view! { <main class="empty"><h1>"Non riusciamo a caricare il workspace"</h1><p>{error.to_string()}</p><button class="primary" on:click=move |_| snapshot.refetch()>"Riprova"</button></main> }.into_any(),
+                Err(error) => view! { <main class="empty"><h1>"We could not load your workspace"</h1><p>{error.to_string()}</p><button class="primary" on:click=move |_| snapshot.refetch()>"Try again"</button></main> }.into_any(),
             })}
         </Suspense>
     }.into_any()
@@ -156,9 +153,9 @@ fn WorkspaceView(
     let data = StoredValue::new(data);
     view! {
         <div class="workspace" data-theme=theme>
-            <aside class="sidebar" aria-label="Navigazione principale">
-                <a href="/" class="brand" aria-label="HPH, pagina iniziale"><span class="brand-mark">"h"</span><span>"hph"<span class="brand-dot">"."</span></span></a>
-                <div class="org"><span class="org-icon">"A"</span><div><strong>{organization}</strong><small>"Workspace dimostrativo"</small></div></div>
+            <aside class="sidebar" aria-label="Main navigation">
+                <a href="/" class="brand" aria-label="HPH home"><span class="brand-mark">"h"</span><span>"hph"<span class="brand-dot">"."</span></span></a>
+                <div class="org"><span class="org-icon">"A"</span><div><strong>{organization}</strong><small>"Demo workspace"</small></div></div>
                 <div class="nav-heading">"WORKSPACE"</div>
                 <nav>
                     <NavItem target=Screen::Overview screen icon="grid"/>
@@ -168,13 +165,13 @@ fn WorkspaceView(
                     <div class="nav-divider"></div>
                     <NavItem target=Screen::Modules screen icon="modules"/>
                 </nav>
-                <div class="sidebar-bottom"><div class="build-note"><Icon name="spark"/><strong>"Spazio alle tue idee."</strong><p>"Componi il gestionale intorno al tuo modo di lavorare."</p><button on:click=move |_| screen.set(Screen::Modules)>"Esplora i moduli →"</button></div>
-                <div class="profile"><span class="avatar">"EC"</span><div><strong>"Elena Conti"</strong><small>"Amministratrice demo"</small></div><span class="online-dot"></span></div></div>
+                <div class="sidebar-bottom"><div class="build-note"><Icon name="spark"/><strong>"Room for your ideas."</strong><p>"Build your workspace around the way you work."</p><button on:click=move |_| screen.set(Screen::Modules)>"Explore modules →"</button></div>
+                <div class="profile"><span class="avatar">"EC"</span><div><strong>"Elena Conti"</strong><small>"Demo administrator"</small></div><span class="online-dot"></span></div></div>
             </aside>
             <div class="main-wrap">
-                <header class="topbar"><div class="breadcrumb">"Workspace"<span>"/"</span><strong>{move || screen.get().title()}</strong></div><div class="top-actions"><span class="demo-badge">"DEMO LOCALE"</span><button class="icon-button" aria-label="Aggiorna i dati" disabled=move || busy.get() on:click=move |_| refresh.run(())>"↻"</button></div></header>
+                <header class="topbar"><div class="breadcrumb">"Workspace"<span>"/"</span><strong>{move || screen.get().title()}</strong></div><div class="top-actions"><span class="demo-badge">"LOCAL DEMO"</span><button class="icon-button" aria-label="Refresh data" disabled=move || busy.get() on:click=move |_| refresh.run(())>"↻"</button></div></header>
                 <main id="main">
-                    <div class="demo-notice">"Dati di esempio · nessun account reale · le modifiche si azzerano al riavvio del server."</div>
+                    <div class="demo-notice">"Sample data · no real accounts · changes reset when the server restarts."</div>
                     <div role="status" aria-live="polite">{move || message.get().map(|(ok, text)| view! { <div class="notice" class:error=!ok>{text}</div> })}</div>
                     {move || {
                         let snapshot = data.get_value();
@@ -184,10 +181,10 @@ fn WorkspaceView(
                             Screen::Attendance if attendance_enabled => view! { <Attendance data=snapshot busy message refresh/> }.into_any(),
                             Screen::Reports if reports_enabled => view! { <Reports data=snapshot/> }.into_any(),
                             Screen::Modules => view! { <Modules data=snapshot busy message refresh/> }.into_any(),
-                            _ => view! { <section class="empty"><h1>"Questo modulo è disattivato"</h1><p>"Puoi riattivarlo dal tuo workspace. I dati della sessione vengono conservati."</p><button class="primary" on:click=move |_| screen.set(Screen::Modules)>"Configura i moduli"</button></section> }.into_any(),
+                            _ => view! { <section class="empty"><h1>"This module is disabled"</h1><p>"You can enable it again in your workspace. Session data is preserved."</p><button class="primary" on:click=move |_| screen.set(Screen::Modules)>"Configure modules"</button></section> }.into_any(),
                         }
                     }}
-                    <footer>"HPH · Il lavoro, in armonia."<span>"Anteprima 0.1 · Rust / Leptos"</span></footer>
+                    <footer>"HPH · Work, in harmony."<span>"Preview 0.1 · Rust / Leptos"</span></footer>
                 </main>
             </div>
         </div>
@@ -214,20 +211,20 @@ fn Overview(
     let active = data.workspace.modules.enabled.len();
     let events = data.workspace.punches.len();
     view! {
-        <div class="page-heading"><div><p class="eyebrow">"IL TUO SPAZIO DI LAVORO"</p><h1>"Tutto al posto giusto."</h1><p>"Persone, tempo e strumenti. Finalmente insieme."</p></div><button class="secondary" on:click=move |_| screen.set(Screen::Modules)><Icon name="modules"/>"Personalizza workspace"</button></div>
-        <section class="hero"><div><div class="hero-kicker"><span class="tiny-dot"></span>"UN BUON LAVORO INIZIA QUI"</div><h2>"Meno complessità."<br/>"Più spazio alle persone."</h2><p>"Un workspace che cresce con te. Scegli ciò che serve al tuo team e costruisci il resto, un modulo alla volta."</p><button class="hero-button" on:click=move |_| screen.set(Screen::Modules)>"Crea il tuo equilibrio"<Icon name="arrow"/></button></div><div class="hero-art" aria-hidden="true"><div class="arch arch-one"></div><div class="arch arch-two"></div><div class="arch arch-three"></div><div class="floating-card"><span class="icon-tile"><Icon name="check"/></span><div><strong>"Il tuo team."</strong><span>"Il tuo modo di lavorare."</span></div></div><span class="hero-star">"✳"</span></div></section>
+        <div class="page-heading"><div><p class="eyebrow">"YOUR WORKSPACE"</p><h1>"Everything in its place."</h1><p>"People, time and tools. Finally together."</p></div><button class="secondary" on:click=move |_| screen.set(Screen::Modules)><Icon name="modules"/>"Customize workspace"</button></div>
+        <section class="hero"><div><div class="hero-kicker"><span class="tiny-dot"></span>"GOOD WORK STARTS HERE"</div><h2>"Less complexity."<br/>"More room for people."</h2><p>"A workspace that grows with you. Choose what your team needs and build the rest, one module at a time."</p><button class="hero-button" on:click=move |_| screen.set(Screen::Modules)>"Find your balance"<Icon name="arrow"/></button></div><div class="hero-art" aria-hidden="true"><div class="arch arch-one"></div><div class="arch arch-two"></div><div class="arch arch-three"></div><div class="floating-card"><span class="icon-tile"><Icon name="check"/></span><div><strong>"Your team."</strong><span>"Your way of working."</span></div></div><span class="hero-star">"✳"</span></div></section>
         <div class="stats-grid">
-            <Stat title="Persone nel team" value=if people { total.to_string() } else { "—".into() } note=if people { "Profili dimostrativi" } else { "Modulo non attivo" } icon="people"/>
-            <Stat title="Al lavoro adesso" value=if attendance { working.to_string() } else { "—".into() } note="Da timbrature della sessione" icon="clock"/>
-            <Stat title="Eventi registrati" value=if attendance { events.to_string() } else { "—".into() } note="Entrate, pause e uscite" icon="chart"/>
-            <Stat title="Moduli attivi" value=format!("{active} / 3") note="Un workspace su misura" icon="modules"/>
+            <Stat title="People on the team" value=if people { total.to_string() } else { "—".into() } note=if people { "Demo profiles" } else { "Module disabled" } icon="people"/>
+            <Stat title="Working now" value=if attendance { working.to_string() } else { "—".into() } note="From this session’s time entries" icon="clock"/>
+            <Stat title="Recorded events" value=if attendance { events.to_string() } else { "—".into() } note="Clock-ins, breaks and clock-outs" icon="chart"/>
+            <Stat title="Active modules" value=format!("{active} / 3") note="A workspace that fits" icon="modules"/>
         </div>
-        <div class="content-grid"><section class="panel"><div class="panel-heading"><div><h2>"Il tuo team"</h2><p>"Le persone al centro, ogni giorno."</p></div>{people.then(|| view! { <button class="text-button" on:click=move |_| screen.set(Screen::People)>"Tutte le persone →"</button> })}</div>
-        {if people { view! { <PeopleTable data=data.clone()/> }.into_any() } else { view! { <div class="empty small"><Icon name="people"/><p>"Attiva il modulo Persone per iniziare."</p></div> }.into_any() }}</section>
-        <section class="panel time-panel"><div class="panel-heading"><div><p class="eyebrow">"IL TUO TEMPO"</p><h2>"Un gesto. Sei al lavoro."</h2></div><Icon name="clock"/></div>
-        {if attendance { view! { <PunchCard data=data.clone() busy message refresh/> }.into_any() } else { view! { <p>"Attiva Timbrature e presenze per registrare la tua giornata."</p> }.into_any() }}
+        <div class="content-grid"><section class="panel"><div class="panel-heading"><div><h2>"Your team"</h2><p>"People at the heart of every day."</p></div>{people.then(|| view! { <button class="text-button" on:click=move |_| screen.set(Screen::People)>"View everyone →"</button> })}</div>
+        {if people { view! { <PeopleTable data=data.clone()/> }.into_any() } else { view! { <div class="empty small"><Icon name="people"/><p>"Enable the People module to get started."</p></div> }.into_any() }}</section>
+        <section class="panel time-panel"><div class="panel-heading"><div><p class="eyebrow">"YOUR TIME"</p><h2>"One click. You’re clocked in."</h2></div><Icon name="clock"/></div>
+        {if attendance { view! { <PunchCard data=data.clone() busy message refresh/> }.into_any() } else { view! { <p>"Enable Time and attendance to record your day."</p> }.into_any() }}
         </section></div>
-        <section class="bottom-banner"><div class="icon-tile"><Icon name="modules"/></div><div><h3>"Il gestionale segue te. Non il contrario."</h3><p>"Attiva solo i moduli utili. Una base condivisa, possibilità da costruire."</p></div><button class="text-button" on:click=move |_| screen.set(Screen::Modules)>"Configura HPH →"</button></section>
+        <section class="bottom-banner"><div class="icon-tile"><Icon name="modules"/></div><div><h3>"Business software built around you."</h3><p>"Enable the modules you need. A shared foundation with room to grow."</p></div><button class="text-button" on:click=move |_| screen.set(Screen::Modules)>"Configure HPH →"</button></section>
     }.into_any()
 }
 
@@ -241,14 +238,14 @@ fn PeopleTable(data: Snapshot) -> AnyView {
     let attendance = data.workspace.modules.contains(ModuleId::Attendance);
     let rows = data.workspace.people.iter().map(|person| {
         let state = data.workspace.state(&person.id);
-        view! { <tr><td><div class="person"><span class="avatar">{person.initials.clone()}</span><div><strong>{person.name.clone()}</strong><small>{person.job.clone()}</small></div></div></td><td>{person.department.clone()}</td><td><span class="status" class:working=state==WorkState::Working class:paused=state==WorkState::Paused>{if attendance { state.label() } else { "Non rilevato" }}</span></td></tr> }
+        view! { <tr><td><div class="person"><span class="avatar">{person.initials.clone()}</span><div><strong>{person.name.clone()}</strong><small>{person.job.clone()}</small></div></div></td><td>{person.department.clone()}</td><td><span class="status" class:working=state==WorkState::Working class:paused=state==WorkState::Paused>{if attendance { state.label() } else { "Not tracked" }}</span></td></tr> }
     }).collect_view();
-    view! { <div class="table-scroll"><table><caption class="sr-only">"Persone e stato di presenza della sessione demo"</caption><thead><tr><th scope="col">"PERSONA"</th><th scope="col">"REPARTO"</th><th scope="col">"STATO"</th></tr></thead><tbody>{rows}</tbody></table></div> }.into_any()
+    view! { <div class="table-scroll"><table><caption class="sr-only">"People and attendance status in the demo session"</caption><thead><tr><th scope="col">"PERSON"</th><th scope="col">"DEPARTMENT"</th><th scope="col">"STATUS"</th></tr></thead><tbody>{rows}</tbody></table></div> }.into_any()
 }
 
 #[component]
 fn People(data: Snapshot) -> AnyView {
-    view! { <div class="page-heading"><div><p class="eyebrow">"PERSONE"</p><h1>"Il valore è nel team."</h1><p>"Anagrafica dimostrativa. La gestione dei profili arriverà nel prossimo incremento."</p></div><span class="pill">{format!("{} persone", data.workspace.people.len())}</span></div><section class="panel"><PeopleTable data/></section> }.into_any()
+    view! { <div class="page-heading"><div><p class="eyebrow">"PEOPLE"</p><h1>"Your team makes the difference."</h1><p>"Demo directory. Profile management is planned for a future update."</p></div><span class="pill">{format!("{} people", data.workspace.people.len())}</span></div><section class="panel"><PeopleTable data/></section> }.into_any()
 }
 
 #[component]
@@ -272,9 +269,9 @@ fn PunchCard(
         .find(|p| p.person_id == data.actor_id)
         .map(|p| p.label.clone());
     view! {
-        <div class="clock-face"><div class="clock-ring"><Icon name="clock"/></div><span class="status" class:working=state==WorkState::Working class:paused=state==WorkState::Paused>{state.label()}</span><h3>{match state { WorkState::Off => "Pronta quando vuoi.", WorkState::Working => "Buon lavoro, Elena.", WorkState::Paused => "Prenditi il tuo tempo." }}</h3><p>{last.map(|value| format!("Ultimo evento: {value}")).unwrap_or_else(|| "Nessuna timbratura nella sessione.".into())}</p></div>
+        <div class="clock-face"><div class="clock-ring"><Icon name="clock"/></div><span class="status" class:working=state==WorkState::Working class:paused=state==WorkState::Paused>{state.label()}</span><h3>{match state { WorkState::Off => "Ready when you are.", WorkState::Working => "Have a good day, Elena.", WorkState::Paused => "Enjoy your break." }}</h3><p>{last.map(|value| format!("Last event: {value}")).unwrap_or_else(|| "No time entries in this session.".into())}</p></div>
         <div class="punch-actions">{buttons.into_iter().map(|kind| view! { <button class="primary" disabled=move || busy.get() on:click=move |_| dispatch(Command::Punch(kind), busy, message, refresh)>{kind.label()}<Icon name="arrow"/></button> }).collect_view()}</div>
-        <p class="microcopy">"Ora registrata dal server · UTC · profilo demo Elena Conti"</p>
+        <p class="microcopy">"Server-recorded time · UTC · demo profile Elena Conti"</p>
     }.into_any()
 }
 
@@ -287,7 +284,7 @@ fn Attendance(
 ) -> AnyView {
     let events = data.workspace.punches.iter().rev().map(|p| view! { <li><span class="event-dot"></span><div><strong>{p.kind.label()}</strong><small>{p.label.clone()}</small></div><span class="pill">"Elena Conti"</span></li> }).collect_view();
     let empty = data.workspace.punches.is_empty();
-    view! { <div class="page-heading"><div><p class="eyebrow">"PRESENZE"</p><h1>"Ogni giornata ha il suo ritmo."</h1><p>"Registra entrate, pause e uscite. Tutti gli orari sono espressi in UTC."</p></div></div><div class="attendance-grid"><section class="panel time-panel"><h2>"La tua timbratura"</h2><PunchCard data=data.clone() busy message refresh/></section><section class="panel"><div class="panel-heading"><div><h2>"Attività della sessione"</h2><p>"Gli eventi vengono controllati e registrati dal server."</p></div></div>{empty.then(|| view! { <div class="empty small"><Icon name="clock"/><h3>"Una nuova giornata ti aspetta"</h3><p>"Registra la prima entrata: comparirà qui."</p></div> })}<ol class="event-list">{events}</ol></section></div> }.into_any()
+    view! { <div class="page-heading"><div><p class="eyebrow">"ATTENDANCE"</p><h1>"Every day has its own rhythm."</h1><p>"Record clock-ins, breaks and clock-outs. All times are shown in UTC."</p></div></div><div class="attendance-grid"><section class="panel time-panel"><h2>"Your time entry"</h2><PunchCard data=data.clone() busy message refresh/></section><section class="panel"><div class="panel-heading"><div><h2>"Session activity"</h2><p>"Events are validated and recorded by the server."</p></div></div>{empty.then(|| view! { <div class="empty small"><Icon name="clock"/><h3>"A new day awaits"</h3><p>"Clock in for the first time and your entry will appear here."</p></div> })}<ol class="event-list">{events}</ol></section></div> }.into_any()
 }
 
 #[component]
@@ -296,7 +293,7 @@ fn Reports(data: Snapshot) -> AnyView {
         let seconds = data.workspace.recorded_seconds(&p.id);
         view! { <tr><td>{p.name.clone()}</td><td>{format!("{}h {:02}m {:02}s", seconds / 3600, seconds % 3600 / 60, seconds % 60)}</td><td>{data.workspace.state(&p.id).label()}</td></tr> }
     }).collect_view();
-    view! { <div class="page-heading"><div><p class="eyebrow">"REPORT"</p><h1>"Il tempo, con chiarezza."</h1><p>"Riepilogo della sessione demo, calcolato dalle timbrature."</p></div></div><section class="panel"><div class="panel-heading"><div><h2>"Tempo registrato per persona"</h2><p>"Solo intervalli chiusi da una pausa o un'uscita. Pause escluse; intervallo in corso non conteggiato."</p></div></div><div class="table-scroll"><table><thead><tr><th scope="col">"PERSONA"</th><th scope="col">"TEMPO REGISTRATO"</th><th scope="col">"STATO"</th></tr></thead><tbody>{rows}</tbody></table></div></section><p class="microcopy">"Questo riepilogo non applica regole contrattuali, arrotondamenti, straordinari o calcoli paghe."</p> }.into_any()
+    view! { <div class="page-heading"><div><p class="eyebrow">"REPORTS"</p><h1>"A clearer view of time."</h1><p>"A summary of the demo session, calculated from time entries."</p></div></div><section class="panel"><div class="panel-heading"><div><h2>"Recorded time per person"</h2><p>"Only intervals closed by a break or clock-out. Breaks and the current open interval are excluded."</p></div></div><div class="table-scroll"><table><thead><tr><th scope="col">"PERSON"</th><th scope="col">"RECORDED TIME"</th><th scope="col">"STATUS"</th></tr></thead><tbody>{rows}</tbody></table></div></section><p class="microcopy">"This summary does not apply contract rules, rounding, overtime or payroll calculations."</p> }.into_any()
 }
 
 #[component]
@@ -309,10 +306,10 @@ fn Modules(
     let cards = data.catalog.into_iter().map(|definition| {
         let id = definition.id;
         let enabled = data.workspace.modules.contains(id);
-        let dependency = match id { ModuleId::People => "Nessuna dipendenza", ModuleId::Attendance => "Richiede Persone", ModuleId::Reports => "Richiede Timbrature e presenze" };
+        let dependency = match id { ModuleId::People => "No dependencies", ModuleId::Attendance => "Requires People", ModuleId::Reports => "Requires Time and attendance" };
         let icon = match id { ModuleId::People => "people", ModuleId::Attendance => "clock", ModuleId::Reports => "chart" };
-        let label = format!("{} {}", if enabled { "Disattiva" } else { "Attiva" }, definition.name);
-        view! { <article class="module-card" class:enabled><div class="module-top"><span class="icon-tile"><Icon name=icon/></span><span class="pill" class:active-pill=enabled>{if enabled { "Attivo" } else { "Disponibile" }}</span></div><h2>{definition.name}</h2><p>{definition.description}</p><small>{dependency}</small><button class="module-toggle" role="switch" aria-label=label aria-checked=enabled.to_string() disabled=move || busy.get() on:click=move |_| dispatch(Command::Module(id, !enabled), busy, message, refresh)><span>{if enabled { "Modulo attivo" } else { "Attiva modulo" }}</span><span class="switch" class:on=enabled><span></span></span></button></article> }
+        let label = format!("{} {}", if enabled { "Disable" } else { "Enable" }, definition.name);
+        view! { <article class="module-card" class:enabled><div class="module-top"><span class="icon-tile"><Icon name=icon/></span><span class="pill" class:active-pill=enabled>{if enabled { "Active" } else { "Available" }}</span></div><h2>{definition.name}</h2><p>{definition.description}</p><small>{dependency}</small><button class="module-toggle" role="switch" aria-label=label aria-checked=enabled.to_string() disabled=move || busy.get() on:click=move |_| dispatch(Command::Module(id, !enabled), busy, message, refresh)><span>{if enabled { "Module enabled" } else { "Enable module" }}</span><span class="switch" class:on=enabled><span></span></span></button></article> }
     }).collect_view();
-    view! { <div class="page-heading"><div><p class="eyebrow">"IL TUO WORKSPACE"</p><h1>"Scegli ciò che ti serve."</h1><p>"Una base solida. I moduli giusti. Un gestionale che ti somiglia."</p></div></div><section class="core-banner"><span class="icon-tile"><Icon name="check"/></span><div><h2>"HPH Core"</h2><p>"Configurazione, design condiviso e regole dei moduli. Sempre presente."</p></div><span class="pill">"Incluso"</span></section><div class="module-grid">{cards}</div><section class="panel next-modules"><p class="eyebrow">"DA COSTRUIRE INSIEME"</p><h2>"Il prossimo capitolo."</h2><p>"Ferie e permessi, turni, documenti, note spese e commesse sono possibili estensioni. Non sono ancora implementate."</p><div class="roadmap-tags"><span>"Ferie e permessi"</span><span>"Turni"</span><span>"Documenti"</span><span>"Commesse"</span></div></section><p class="microcopy">"Le dipendenze vengono verificate sul server. Disattivare un modulo non elimina i dati; le presenze richiedono la chiusura delle sessioni aperte."</p> }.into_any()
+    view! { <div class="page-heading"><div><p class="eyebrow">"YOUR WORKSPACE"</p><h1>"Choose what you need."</h1><p>"A solid foundation. The right modules. A workspace that feels like yours."</p></div></div><section class="core-banner"><span class="icon-tile"><Icon name="check"/></span><div><h2>"HPH Core"</h2><p>"Configuration, shared design and module rules. Always included."</p></div><span class="pill">"Included"</span></section><div class="module-grid">{cards}</div><section class="panel next-modules"><p class="eyebrow">"BUILDING WHAT COMES NEXT"</p><h2>"The next chapter."</h2><p>"Leave, shifts, documents, expenses and projects are possible extensions. They are not implemented yet."</p><div class="roadmap-tags"><span>"Leave and time off"</span><span>"Shifts"</span><span>"Documents"</span><span>"Projects"</span></div></section><p class="microcopy">"Dependencies are checked on the server. Disabling a module preserves its data; attendance requires all open sessions to be closed."</p> }.into_any()
 }

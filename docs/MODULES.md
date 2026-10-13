@@ -1,39 +1,39 @@
-# Estendere HPH
+# Extending HPH
 
-## Contratto attuale
+## Current contract
 
-La composizione dei moduli è dichiarata in `crates/hph-core/src/lib.rs`: `ModuleId`, `catalog()` e `ModuleSet`. È una fonte condivisa compilata sia per il server sia per il browser. Non mantenere un secondo elenco JavaScript o un secondo motore di dipendenze nella UI.
+Module composition is declared in `crates/hph-core/src/lib.rs`: `ModuleId`, `catalog()` and `ModuleSet`. This shared source is compiled for both the server and the browser. Do not maintain a second JavaScript catalog or a separate dependency engine in the UI.
 
-La scelta dei moduli è una configurazione dell'azienda: HPH Core è sempre presente e ogni azienda abilita le funzioni adatte ai propri processi. I moduli restano codice Rust del template, compilato e versionato; non sono plugin di terze parti caricati a runtime. La demo mantiene la scelta solo in memoria; il prossimo livello persistente deve associarla all'organizzazione autenticata.
+Module selection is a company setting: HPH Core is always included, and each company enables the features that fit its processes. Modules remain compiled, versioned Rust code within the template; they are not third-party plugins loaded at runtime. The demo keeps the selection in memory; persistent application configuration must be associated with the authenticated organization.
 
-Il core è sempre presente. I moduli attuali formano una catena: Persone → Presenze → Report. Per attivare un modulo, le sue dipendenze devono essere attive; per disattivarne una, occorre disattivare prima i moduli che la usano. Una modifica non valida non altera lo stato precedente.
+Core is always present. The current modules form a dependency chain: People → Attendance → Reports. A module's dependencies must be enabled before enabling it. Before disabling a dependency, disable the modules that use it. An invalid change must leave the previous state intact.
 
-Disabilitare un modulo deve interromperne le operazioni protette e nascondere le schermate applicabili, **senza eliminare i dati**. Le sessioni di timbratura aperte impediscono di disattivare Presenze.
+Disabling a module must stop its protected operations and hide the relevant screens **without deleting its data**. Open work sessions prevent Attendance from being disabled.
 
-## Personalizzare una singola installazione aziendale
+## Customize a single company installation
 
-In `hph.toml` si può impostare `modules` come lista esplicita di ID (`people`, `attendance`, `reports`). La lista opzionale sostituisce `preset` e viene validata all'avvio: dipendenze mancanti o ID duplicati fanno rifiutare la configurazione. L'esempio commentato è in `hph.toml`.
+In `hph.toml`, set `modules` to an explicit list of IDs (`people`, `attendance`, `reports`). This optional list overrides `preset` and is validated at startup: missing dependencies or duplicate IDs cause the configuration to be rejected. A commented example is included in `hph.toml`.
 
-Questa è una configurazione iniziale persistente per l'installazione dell'azienda. Le modifiche dalla schermata demo sono ancora temporanee e si azzerano al riavvio; la persistenza delle impostazioni runtime per organizzazione arriverà con il database.
+This is persistent initial configuration for the company installation. Changes made from the demo screen remain temporary and reset on restart. Persisting runtime settings per organization requires connecting the PostgreSQL repository to authenticated requests.
 
-## Aggiungere un modulo
+## Add a module
 
-1. Aggiungere un identificatore tipizzato a `ModuleId` e una definizione in `catalog()` con dipendenze esplicite. Non creare cicli.
-2. Definire le regole del dominio e i tipi serializzati nel core o, quando cresce, in un crate dedicato. Tenere Leptos, HTTP e database fuori dalle regole pure.
-3. Implementare l'operazione server in `src/api.rs`. Ottenere l'attore dal contesto server, verificare appartenenza, permesso e attivazione prima della mutazione. Un pulsante nascosto non è un controllo di accesso.
-4. Aggiungere la schermata e la navigazione in `src/app.rs`. Riutilizzare colori, componenti, stati vuoti ed errori esistenti.
-5. Definire cosa succede alle operazioni aperte quando si disattiva il modulo. Non cancellare implicitamente documenti o eventi.
-6. Scrivere test delle regole e del confine HTTP: operazione valida, permesso negato, azienda estranea, modulo spento, input errato e conservazione dei dati.
-7. Aggiornare preset e documentazione solo se il nuovo modulo fa realmente parte di quel preset. Non mostrare come disponibile un modulo non implementato.
+1. Add a typed identifier to `ModuleId` and a definition to `catalog()` with explicit dependencies. Do not introduce cycles.
+2. Define domain rules and serialized types in the core or, as it grows, a dedicated crate. Keep Leptos, HTTP and database concerns out of pure domain rules.
+3. Implement the server operation in `src/api.rs`. Obtain the actor from server context and verify membership, permissions and module activation before mutating state. A hidden button is not an access control.
+4. Add the screen and navigation in `src/app.rs`. Reuse existing colors, components, empty states and errors. Keep interface text, accessibility labels, comments and documentation in English.
+5. Define what happens to open operations when the module is disabled. Do not implicitly delete documents or events.
+6. Test domain rules and the HTTP boundary: valid operations, denied permissions, foreign companies, disabled modules, invalid input and data retention.
+7. Update presets and documentation only if the new module actually belongs to that preset. Do not present an unimplemented module as available.
 
-## Esempio futuro: ferie
+## Future example: leave
 
-Dipendenza: Persone. Requisiti da chiarire prima del codice: intervalli di date, fuso aziendale, calendario lavorativo, approvatore, sovrapposizioni e rettifiche. Una richiesta è associata all'azienda e al dipendente; l'approvazione richiede un permesso distinto dall'invio. Il saldo ferie richiede regole esplicite e non va ricavato da ipotesi sui contratti.
+Dependency: People. Clarify these requirements before implementation: date ranges, company time zone, working calendar, approver, overlaps and corrections. A request belongs to a company and employee; approval requires a permission distinct from submission. Leave balances require explicit rules and must not be inferred from assumptions about employment contracts.
 
-## Confine della demo
+## Demo boundary
 
-`DemoState` usa memoria condivisa protetta da mutex e un attore fisso. Il controllo del tenant nel dominio non equivale a un sistema multi-azienda sicuro: mancano autenticazione, verifica della membership a ogni richiesta e isolamento nel database.
+`DemoState` uses mutex-protected shared memory and a fixed actor. Domain-level tenant checks do not establish a secure multi-company service. Authentication, per-request membership verification and database isolation at the HTTP boundary still need to be integrated.
 
-La futura implementazione PostgreSQL deve usare transazioni per modifiche correlate, vincoli per impedire sessioni incompatibili, chiavi collegate al tenant e test di isolamento con almeno due aziende. L'abilitazione del modulo è una scelta aziendale, mentre il permesso è una proprietà dell'utente: entrambe vanno verificate.
+PostgreSQL operations must use transactions for related changes, constraints to prevent incompatible work sessions, tenant-linked keys and isolation tests with at least two companies. Module activation is a company setting, while permissions belong to the user: both must be checked.
 
-Per preservare configurazioni e dati durante l'evoluzione del template, usare migrazioni versionate. Non ricopiare i dati di esempio sopra quelli di un'installazione esistente.
+Use versioned migrations to preserve configuration and data as the template evolves. Do not overwrite an existing installation with demo data.

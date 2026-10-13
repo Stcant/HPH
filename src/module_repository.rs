@@ -23,9 +23,9 @@ pub enum CompanyModuleError {
 impl fmt::Display for CompanyModuleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Database(_) => f.write_str("Errore durante l'accesso ai moduli aziendali."),
-            Self::Unauthorized => f.write_str("Membership aziendale non autorizzata."),
-            Self::InvalidConfiguration(_) => f.write_str("Configurazione dei moduli non valida."),
+            Self::Database(_) => f.write_str("Could not access company modules."),
+            Self::Unauthorized => f.write_str("Company membership is not authorized."),
+            Self::InvalidConfiguration(_) => f.write_str("Invalid module configuration."),
         }
     }
 }
@@ -104,7 +104,7 @@ impl<'a> CompanyModuleRepository<'a> {
                     "attendance" => Ok(ModuleId::Attendance),
                     "reports" => Ok(ModuleId::Reports),
                     _ => Err(CompanyModuleError::InvalidConfiguration(
-                        "ID modulo sconosciuto.".into(),
+                        "Unknown module ID.".into(),
                     )),
                 })
                 .collect::<Result<Vec<_>, _>>()?;
