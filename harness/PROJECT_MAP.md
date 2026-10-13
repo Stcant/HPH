@@ -17,7 +17,7 @@
 | Moduli | Catalogo tipizzato, dipendenze dichiarate e abilitazione controllata sul server; configurazione persistente per azienda nel prossimo incremento |
 | Configurazione | hph.toml per azienda, tema, preset o lista esplicita di moduli; le modifiche runtime demo sono temporanee |
 | Design | CSS con token, verde salvia e alternativa indigo; sidebar, card, tabelle e layout responsive |
-| Persistenza | Schema PostgreSQL e policy RLS testate in CI; pool SQLx e migrazioni collegati all'avvio. Le schermate usano ancora stato in memoria; repository applicativi restano da integrare |
+| Persistenza | Schema PostgreSQL e policy RLS testate in CI; pool SQLx, migrazioni e repository moduli. Le schermate usano ancora stato in memoria; l'API attende un'identità autenticata |
 | Identità | Contratti Rust per identità utente e membership attiva per azienda con ruolo; resolver seleziona l'attore per tenant. Login, sessioni e storage membership restano da implementare |
 
 Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM e un ecosistema UI meno ampio rispetto a React. Leptos genera un loader JavaScript; il codice applicativo resta Rust. Non promettere assenza assoluta di JavaScript nel browser.
@@ -25,7 +25,8 @@ Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM
 ## Implementazione iniziale
 - `crates/hph-core/src/lib.rs`: catalogo e dipendenze, identità e membership aziendali, macchina a stati delle timbrature, calcolo di intervalli chiusi e test.
 - `migrations/0001_company_data.sql`: schema PostgreSQL multi-azienda e policy RLS; `migrations/tests/tenant_isolation.sql` verifica visibilità e scritture cross-company.
-- `src/database.rs`: pool SQLx, migrator runtime, ping e transazioni con contesto RLS transaction-local; nessun repository business ancora.
+- `src/database.rs`: pool SQLx, migrator runtime, ping e transazioni con contesto RLS transaction-local.
+- `src/module_repository.rs`: lettura/scrittura atomica di moduli aziendali sotto RLS, membership attiva e ruolo admin. Non è ancora collegato alle server function finché manca una sessione autenticata con UUID verificati.
 
 - `src/app.rs`: dashboard, anagrafica dimostrativa, timbrature, report, configurazione moduli e componenti condivisi.
 - `src/api.rs`: server function snapshot, configurazione e timbratura. L'identità dell'attore viene dal contesto server.
