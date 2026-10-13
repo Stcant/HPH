@@ -54,4 +54,6 @@ jobs:
       - name: Verify SQLx pool, migrations, and tenant context
         env:
           HPH_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/hph_app_test
-        run: cargo test --features ssr database::tests::sqlx_pool_migrates_and_scopes_tenant_context --locked
+        run: |
+          cargo test --features ssr database::tests::sqlx_pool_migrates_and_scopes_tenant_context --locked
+          cargo test --features ssr module_repository::tests::company_module_selection_is_tenant_scoped_and_admin_only --locked
