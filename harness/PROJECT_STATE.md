@@ -3,7 +3,7 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: repository SQLx per la configurazione dei moduli aziendali. Stato: **in progress**, test PostgreSQL aggiunto al workflow CI; attendere l'esito. Il commit precedente SQLx è stato integrato in main con PR #4 (merge `e7b2d634fd119fbba74c64e60e1d187a5e4546cd`). Il progetto complessivo resta in_progress; QA browser ancora mancante.
+Incremento corrente: repository SQLx per la configurazione dei moduli aziendali. Stato: **verified** sul commit `ac620979cac96d78803dd1a369df07191ea55a30`; run CI 38461693770 riuscito. Il commit precedente SQLx è stato integrato in main con PR #4 (merge `e7b2d634fd119fbba74c64e60e1d187a5e4546cd`). Il progetto complessivo resta in_progress; QA browser ancora mancante.
 Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/sqlx-database-foundation. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
 
 ## Decisioni
@@ -94,9 +94,9 @@ Aggiunto `src/module_repository.rs`: lettura tenant-scoped per membership attiva
 
 | Criterio | Risultato | Evidenza |
 | --- | --- | --- |
-| Repository limita query e scritture al tenant tramite contesto RLS | PENDING | Test PostgreSQL `company_module_selection_is_tenant_scoped_and_admin_only` aggiunto al job database |
-| Solo membership admin attiva può salvare la configurazione | PENDING | Verifica integrata nello stesso test PostgreSQL |
-| Formattazione, test SSR e check WASM | PENDING | Attendere GitHub Actions del branch `feat/company-module-repository` |
+| Repository limita query e scritture al tenant tramite contesto RLS | PASS | Test PostgreSQL `company_module_selection_is_tenant_scoped_and_admin_only` superato nel job database del run 38461693770 |
+| Solo membership admin attiva può salvare la configurazione | PASS | Test PostgreSQL verifica round-trip admin e rifiuto per ruolo employee |
+| Formattazione, test SSR e check WASM | PASS | Job `checks` del run CI 38461693770 superato |
 
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
