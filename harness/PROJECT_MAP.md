@@ -17,7 +17,7 @@
 | Moduli | Catalogo tipizzato, dipendenze dichiarate e abilitazione controllata sul server; configurazione persistente per azienda nel prossimo incremento |
 | Configurazione | hph.toml per azienda, tema, preset o lista esplicita di moduli; le modifiche runtime demo sono temporanee |
 | Design | CSS con token, verde salvia e alternativa indigo; sidebar, card, tabelle e layout responsive |
-| Persistenza | Schema PostgreSQL iniziale con organizzazioni, identità esterne, persone, membership, moduli e timbrature; test RLS per azienda in CI in corso. Repository e migrazioni SQLx nell'app restano da integrare |
+| Persistenza | Schema PostgreSQL iniziale con organizzazioni, identità esterne, persone, membership, moduli e timbrature; test RLS per azienda verificato in CI. Repository e migrazioni SQLx nell'app restano da integrare |
 | Identità | Contratti Rust per identità utente e membership attiva per azienda con ruolo; resolver seleziona l'attore per tenant. Login, sessioni e storage membership restano da implementare |
 
 Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM e un ecosistema UI meno ampio rispetto a React. Leptos genera un loader JavaScript; il codice applicativo resta Rust. Non promettere assenza assoluta di JavaScript nel browser.
