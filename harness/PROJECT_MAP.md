@@ -17,8 +17,8 @@
 | Moduli | Catalogo tipizzato, dipendenze dichiarate e abilitazione controllata sul server; configurazione persistente per azienda nel prossimo incremento |
 | Configurazione | hph.toml per azienda, tema, preset o lista esplicita di moduli; le modifiche runtime demo sono temporanee |
 | Design | CSS con token, verde salvia e alternativa indigo; sidebar, card, tabelle e layout responsive |
-| Persistenza | Schema PostgreSQL e policy RLS testate in CI; pool SQLx, migrazioni e repository moduli. Le schermate usano ancora stato in memoria; l'API attende un'identità autenticata |
-| Identità | Contratti Rust per identità utente e membership attiva per azienda con ruolo; resolver seleziona l'attore per tenant. Login, sessioni e storage membership restano da implementare |
+| Persistenza | Schema PostgreSQL e policy RLS testate in CI; pool SQLx, migrazioni e repository per moduli e membership. Le schermate usano ancora stato in memoria; l'API attende un'identità autenticata |
+| Identità | Contratti Rust e repository SQLx per membership attiva/ruolo/persona per tenant. Login, sessioni e collegamento del resolver alle server function restano da implementare |
 
 Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM e un ecosistema UI meno ampio rispetto a React. Leptos genera un loader JavaScript; il codice applicativo resta Rust. Non promettere assenza assoluta di JavaScript nel browser.
 
@@ -27,6 +27,7 @@ Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM
 - `migrations/0001_company_data.sql`: schema PostgreSQL multi-azienda e policy RLS; `migrations/tests/tenant_isolation.sql` verifica visibilità e scritture cross-company.
 - `src/database.rs`: pool SQLx, migrator runtime, ping e transazioni con contesto RLS transaction-local.
 - `src/module_repository.rs`: lettura/scrittura atomica di moduli aziendali sotto RLS, membership attiva e ruolo admin. Non è ancora collegato alle server function finché manca una sessione autenticata con UUID verificati.
+- `src/membership_repository.rs`: risolve l'attore da una membership persistita, attiva e tenant-scoped, a partire da un'identità e da un tenant già verificati dal livello di autenticazione.
 
 - `src/app.rs`: dashboard, anagrafica dimostrativa, timbrature, report, configurazione moduli e componenti condivisi.
 - `src/api.rs`: server function snapshot, configurazione e timbratura. L'identità dell'attore viene dal contesto server.
@@ -41,7 +42,7 @@ La configurazione iniziale dell'azienda può usare un preset o una lista esplici
 Core sempre attivo. Persone contiene profili sintetici in sola lettura. Presenze dipende da Persone; Report dipende da Presenze. I moduli si disattivano senza cancellare eventi; sessioni aperte impediscono la disattivazione di Presenze. Report mostra il tempo degli intervalli chiusi della sessione, pause escluse.
 
 ## Confini attuali
-Questa è una demo locale con una membership amministrativa sintetica. I contratti identità/membership risolvono l'attore per tenant e lo schema PostgreSQL con RLS e il relativo test sono stati aggiunti; la verifica CI è in corso. Login, sessioni, repository SQL e isolamento HTTP non sono ancora integrati. Il tenant è modellato e testato nel dominio, ma questo non prova un servizio multi-azienda sicuro. Dati e modifiche ai moduli si azzerano al riavvio. Aggiornamento tra schede manuale.
+Questa è una demo locale con una membership amministrativa sintetica. I contratti identità/membership, lo schema RLS, il repository moduli e il repository SQLx per membership persistite sono coperti dalla CI. Login, sessioni e collegamento dei repository alle server function non sono ancora integrati. Il tenant è modellato e testato nel dominio, ma questo non prova un servizio multi-azienda sicuro. Dati e modifiche ai moduli si azzerano al riavvio. Aggiornamento tra schede manuale.
 
 Il percorso verso più aziende richiede membership verificata, scope tenant obbligatorio su query/mutazioni, migrazioni, vincoli e test di isolamento nel database. Nessun dato reale prima di questa fase.
 

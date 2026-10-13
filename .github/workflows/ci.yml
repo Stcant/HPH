@@ -69,3 +69,4 @@ jobs:
             psql -h 127.0.0.1 -U postgres -d hph_app_test -v ON_ERROR_STOP=1 \
               -c "GRANT USAGE ON SCHEMA public TO hph_runtime; GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO hph_runtime;"
           cargo test --features ssr module_repository::tests::company_module_selection_is_tenant_scoped_and_admin_only --locked
+          cargo test --features ssr membership_repository::tests::actor_resolution_uses_only_active_membership_in_selected_tenant --locked
