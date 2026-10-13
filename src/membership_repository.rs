@@ -156,9 +156,17 @@ mod tests {
         .fetch_one(admin.pool())
         .await
         .unwrap();
+        let person_b2: Uuid = sqlx::query_scalar(
+            "INSERT INTO hph_people (organization_id, employee_number, display_name) \
+             VALUES ($1, 'membership-b2', 'Tenant B only person') RETURNING id",
+        )
+        .bind(tenant_b)
+        .fetch_one(admin.pool())
+        .await
+        .unwrap();
         sqlx::query(
             "INSERT INTO hph_memberships (organization_id, user_id, person_id, role) \
-             VALUES ($1, $2, $3, 'admin'), ($4, $2, $5, 'employee'), ($4, $6, $5, 'admin')",
+             VALUES ($1, $2, $3, 'admin'), ($4, $2, $5, 'employee'), ($4, $6, $7, 'admin')",
         )
         .bind(tenant_a)
         .bind(user)
@@ -166,6 +174,7 @@ mod tests {
         .bind(tenant_b)
         .bind(person_b)
         .bind(outsider)
+        .bind(person_b2)
         .execute(admin.pool())
         .await
         .unwrap();
