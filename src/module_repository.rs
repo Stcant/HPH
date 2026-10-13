@@ -221,7 +221,10 @@ mod tests {
         let repository = CompanyModuleRepository::new(&database);
         assert!(repository.load(user_id, tenant_id).await.unwrap().is_none());
         let selected = ModuleSet::preset("complete").unwrap();
-        repository.save(user_id, tenant_id, &selected).await.unwrap();
+        repository
+            .save(user_id, tenant_id, &selected)
+            .await
+            .unwrap();
         let loaded = repository.load(user_id, tenant_id).await.unwrap().unwrap();
         assert!(loaded.contains(ModuleId::Reports));
 
