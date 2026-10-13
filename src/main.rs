@@ -1,10 +1,7 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    use hph::{
-        database::Database,
-        server::{Config, DemoState, router},
-    };
+    use hph::{database::Database, server::{Config, DemoState, router}};
     use leptos::prelude::*;
     use std::sync::Arc;
 

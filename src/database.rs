@@ -95,13 +95,13 @@ mod tests {
             .unwrap();
 
         let tenant_context: Option<Uuid> = sqlx::query_scalar("SELECT hph_current_tenant_id()")
-                .fetch_one(&mut *transaction)
-                .await
-                .unwrap();
+            .fetch_one(&mut *transaction)
+            .await
+            .unwrap();
         let user_context: Option<Uuid> = sqlx::query_scalar("SELECT hph_current_user_id()")
-                .fetch_one(&mut *transaction)
-                .await
-                .unwrap();
+            .fetch_one(&mut *transaction)
+            .await
+            .unwrap();
         assert_eq!(tenant_context, Some(tenant_id));
         assert_eq!(user_context, Some(user_id));
 
