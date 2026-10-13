@@ -62,12 +62,20 @@ impl DemoState {
             job: job.into(),
         })
         .collect();
+        let identity = UserIdentity {
+            id: "demo-user".into(),
+        };
+        let memberships = [Membership {
+            user_id: identity.id.clone(),
+            tenant_id: "demo".into(),
+            person_id: "elena".into(),
+            role: Role::Admin,
+            active: true,
+        }];
+        let actor = identity.actor_for("demo", &memberships)?;
+
         Ok(Self {
-            actor: Actor {
-                tenant_id: "demo".into(),
-                person_id: "elena".into(),
-                role: Role::Admin,
-            },
+            actor,
             workspace: Mutex::new(Workspace {
                 tenant_id: "demo".into(),
                 organization: config.organization,
