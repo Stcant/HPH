@@ -22,12 +22,13 @@ leptos_axum = { version = "0.8", optional = true }
 tokio = { version = "1", features = ["rt-multi-thread", "net", "signal"], optional = true }
 chrono = { version = "0.4", optional = true }
 toml = { version = "0.9", optional = true }
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring-webpki", "postgres", "migrate", "uuid"], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 console_error_panic_hook = { version = "0.1", optional = true }
 
 [features]
 hydrate = ["leptos/hydrate", "dep:wasm-bindgen", "dep:console_error_panic_hook"]
-ssr = ["dep:axum", "dep:leptos_axum", "dep:tokio", "dep:chrono", "dep:toml", "leptos/ssr", "leptos_meta/ssr", "leptos_router/ssr"]
+ssr = ["dep:axum", "dep:leptos_axum", "dep:tokio", "dep:chrono", "dep:toml", "dep:sqlx", "leptos/ssr", "leptos_meta/ssr", "leptos_router/ssr"]
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }

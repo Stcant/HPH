@@ -3,11 +3,11 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: schema PostgreSQL aziendale e test automatico RLS. Stato: **verified** sul commit 6405f429f9fa45e83573491470566c0231ae8859; run CI 38456551456 riuscito. Il progetto complessivo resta in_progress; QA browser ancora mancante.
-Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/postgres-tenant-isolation. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
+Incremento corrente: pool SQLx, migrazioni PostgreSQL e contesto tenant transazionale. Stato: **verified** sul commit 6b3964a4acef3b1241ead813f2980c9b9a140cba; run CI 38460315357 riuscito. Il progetto complessivo resta in_progress; QA browser ancora mancante.
+Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/sqlx-database-foundation. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
 
 ## Decisioni
-Leptos + Axum; core di dominio indipendente; catalogo e dipendenze dei moduli; CSS responsive e temi; PostgreSQL + SQLx previsti per la fase successiva. La lista iniziale dei moduli è configurazione persistente per installazione, validata all'avvio. Le modifiche runtime demo restano temporanee; PostgreSQL dovrà persistere la configurazione per organizzazione. Il modello di deploy (istanza dedicata o multi-azienda) resta aperto. Dettagli e confini in [PROJECT_MAP.md](PROJECT_MAP.md).
+Leptos + Axum; core di dominio indipendente; catalogo e dipendenze dei moduli; CSS responsive e temi; PostgreSQL con SQLx per pool, migrazioni e contesto tenant transazionale; repository applicativi restano da integrare. La lista iniziale dei moduli è configurazione persistente per installazione, validata all'avvio. Le modifiche runtime demo restano temporanee; PostgreSQL dovrà persistere la configurazione per organizzazione. Il modello di deploy (istanza dedicata o multi-azienda) resta aperto. Dettagli e confini in [PROJECT_MAP.md](PROJECT_MAP.md).
 
 ## Risultato implementato
 - Dashboard, persone demo in sola lettura, timbrature, riepiloghi e configurazione moduli.
@@ -62,8 +62,8 @@ Scope: organizzazioni, identità esterne, persone, membership, moduli configurat
 | Criterio | Risultato | Evidenza |
 | --- | --- | --- |
 | Dati aziendali e coerenza tra organizzazioni | PASS | FK composte legano membership/persona e timbrature/persona alla stessa organizzazione; vincoli univoci e chiave idempotente per timbratura |
-| Letture scoped, membership proprie e blocco insert/update/delete cross-company | PENDING | Script `migrations/tests/tenant_isolation.sql` eseguito contro PostgreSQL 18 in CI |
-| Test Rust, formattazione e check WASM | PASS | Nessun sorgente Rust modificato; ultimo check verde sul commit `791db7fe906203df3a682d407de0cb062183b43e` |
+| Letture scoped, membership proprie e blocco insert/update/delete cross-company | PASS | Script `migrations/tests/tenant_isolation.sql` eseguito contro PostgreSQL 18 in CI, run 38456551456 |
+| Test Rust, formattazione e check WASM | PASS | Job `checks` del run CI 38456551456 |
 
 La runtime app dovrà impostare `hph.tenant_id` e `hph.user_id` transazionalmente, verificare membership e ruoli nel servizio e usare un ruolo non proprietario senza `BYPASSRLS`; questo schema da solo non prova la sicurezza delle operazioni HTTP.
 
@@ -77,6 +77,17 @@ Scope: schema iniziale per organizzazioni, identità esterne, persone, membershi
 | Le query tenant-scoped non espongono righe di un'altra azienda | PASS | Test automatici di visibilità, update/delete cross-company, insert cross-company e assenza del contesto tenant |
 | Verifiche Rust e WASM restano verdi | PASS | Job `checks` dello stesso run CI |
 
+## Incremento: fondazione SQLx applicativa — 2026-10-13
+
+Scope verificato: pool PostgreSQL SQLx per il server SSR; migrator separabile con ruolo dedicato; helper che assegna user e tenant solo per la durata di una transazione; health check opzionale. Le server function continuano a usare lo stato demo in memoria.
+
+| Criterio | Risultato | Evidenza |
+| --- | --- | --- |
+| Pool SQLx, migrazione e tenant context compilano | PASS | Run CI 38460315357: cargo fmt, test workspace e check WASM superati |
+| Migrazione applicata due volte e pool raggiungibile su PostgreSQL | PASS | Job `database` del run 38460315357; `sqlx_pool_migrates_and_scopes_tenant_context` |
+| Tenant e user context sono transaction-local | PASS | Il test legge entrambi i valori nella transazione e verifica il tenant nullo dopo il commit |
+| CI Rust, SSR, WASM e RLS preesistente | PASS | Job `checks` e `database` del run [38460315357](https://github.com/Stcant/HPH/actions/runs/38460315357) sul commit `6b3964a4acef3b1241ead813f2980c9b9a140cba` |
+
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
 - Il rendering SSR dei componenti profondamente annidati produceva uno stack overflow. Confini dei componenti resi AnyView; successivamente tutti i 9 test sono passati con la configurazione standard, senza aumentare lo stack.
@@ -86,7 +97,7 @@ La demo perde dati e configurazioni interattive al riavvio. I profili sono sinte
 Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
 
 ## Prossima azione
-Integrare le migrazioni con SQLx, il pool PostgreSQL e i repository applicativi; mantenere test end-to-end di isolamento tra due organizzazioni. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
+Integrare autenticazione e sessioni verificate; aggiungere repository SQLx per membership, persone, presenze e configurazione dei moduli, sostituendo gradualmente lo stato demo. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
 
 ## File e lettura
 Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.

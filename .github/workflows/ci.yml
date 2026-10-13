@@ -36,6 +36,8 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - name: Apply schema and verify tenant isolation
         run: |
           docker run --rm --network host \
@@ -44,3 +46,12 @@ jobs:
             psql -h 127.0.0.1 -U postgres -d hph_test -v ON_ERROR_STOP=1 \
               -f /workspace/migrations/0001_company_data.sql \
               -f /workspace/migrations/tests/tenant_isolation.sql
+      - name: Create SQLx integration database
+        run: |
+          docker run --rm --network host -e PGPASSWORD=postgres postgres:18 \
+            psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+              -c "CREATE DATABASE hph_app_test;"
+      - name: Verify SQLx pool, migrations, and tenant context
+        env:
+          HPH_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/hph_app_test
+        run: cargo test --features ssr database::tests::sqlx_pool_migrates_and_scopes_tenant_context --locked
