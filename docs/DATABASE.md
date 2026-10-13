@@ -23,6 +23,12 @@ The SSR server can open a bounded SQLx PostgreSQL pool with `HPH_DATABASE_URL`. 
 
 Each database operation must start a transaction scoped to a previously verified user and organization through `Database::begin_tenant_transaction(user_id, tenant_id)`. Both RLS settings are transaction-local. The `/health` endpoint checks pool reachability when configured.
 
+## Company module repository
+
+`src/module_repository.rs` provides tenant-scoped reads and atomic writes for `hph_company_modules`. Reads require an active membership; writes additionally require an active admin membership. The repository validates module dependencies through `hph-core` and records all flags together in one transaction. It returns `None` when no company selection is stored so the caller can apply its configured preset.
+
+The SSR screens and server functions do not call this repository yet. The current application still uses its in-memory demo actor, whose IDs are not database UUIDs. Connect it only after authentication supplies verified user and organization UUIDs; do not adapt the synthetic demo identity into a production database identity.
+
 ## Current limit
 
-The current screens and server functions still use in-memory demo state; the pool is not yet used for people, attendance, memberships, or module configuration. SQLx connection, migration, and transaction-context behavior are exercised against PostgreSQL in CI. Authentication, repositories, admin-only permissions, payroll rules, and production readiness remain out of scope.
+People, attendance, memberships, and module configuration in the screens are still in-memory demo state. Authentication, session verification, HTTP integration, and production authorization remain out of scope. SQLx repository behavior is exercised against PostgreSQL in CI.
