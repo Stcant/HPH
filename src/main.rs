@@ -34,7 +34,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => None,
     };
 
-    let state = DemoState::new(config)?;
     let state = Arc::new(match database {
         Some(database) => state.with_database(database),
         None => state,
