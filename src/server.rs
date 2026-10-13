@@ -16,6 +16,7 @@ pub struct Config {
 pub struct DemoState {
     pub workspace: Mutex<Workspace>,
     pub actor: Actor,
+    pub database: Option<crate::database::Database>,
 }
 impl DemoState {
     pub fn new(config: Config) -> Result<Self, String> {
@@ -76,6 +77,7 @@ impl DemoState {
 
         Ok(Self {
             actor,
+            database: None,
             workspace: Mutex::new(Workspace {
                 tenant_id: "demo".into(),
                 organization: config.organization,
@@ -86,6 +88,11 @@ impl DemoState {
             }),
         })
     }
+    pub fn with_database(mut self, database: crate::database::Database) -> Self {
+        self.database = Some(database);
+        self
+    }
+
     pub fn snapshot(&self, workspace: &Workspace) -> Snapshot {
         Snapshot {
             workspace: workspace.clone(),
@@ -106,8 +113,21 @@ pub fn router(options: LeptosOptions, state: Arc<DemoState>) -> axum::Router {
     use crate::app::{App, shell};
     use axum::{Router, routing::get};
     use leptos_axum::{LeptosRoutes, generate_route_list};
+    let health_database = state.database.clone();
     Router::new()
-        .route("/health", get(|| async { "HPH demo ready" }))
+        .route("/health", get(move || {
+            let database = health_database.clone();
+            async move {
+                use axum::http::StatusCode;
+                match database {
+                    Some(database) => match database.ping().await {
+                        Ok(()) => (StatusCode::OK, "HPH demo ready; PostgreSQL reachable"),
+                        Err(_) => (StatusCode::SERVICE_UNAVAILABLE, "HPH database unavailable"),
+                    },
+                    None => (StatusCode::OK, "HPH demo ready; data is in memory"),
+                }
+            }
+        }))
         .leptos_routes_with_context(
             &options,
             generate_route_list(App),
@@ -197,6 +217,20 @@ mod tests {
         )
         .unwrap();
         assert!(DemoState::new(invalid).is_err());
+    }
+
+    #[tokio::test]
+    async fn health_endpoint_reports_the_in_memory_demo_mode() {
+        let response = app()
+            .oneshot(Request::builder().uri("/health").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        assert_eq!(
+            String::from_utf8(bytes.to_vec()).unwrap(),
+            "HPH demo ready; data is in memory"
+        );
     }
 
     #[tokio::test]

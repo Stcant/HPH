@@ -2,6 +2,9 @@ pub mod api;
 pub mod app;
 
 #[cfg(feature = "ssr")]
+pub mod database;
+
+#[cfg(feature = "ssr")]
 pub mod server;
 
 #[cfg(feature = "hydrate")]

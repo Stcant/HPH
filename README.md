@@ -31,7 +31,7 @@ HPH_DEMO=true cargo leptos watch
 
 In PowerShell, impostare prima `$env:HPH_DEMO = "true"`, poi eseguire `cargo leptos watch`.
 
-Aprire **http://127.0.0.1:3000**. La demo rifiuta l'avvio senza consenso esplicito `HPH_DEMO=true` o con un indirizzo di ascolto diverso da loopback. Non esporla tramite proxy, tunnel o rete pubblica: non è presente un sistema di autenticazione.
+Aprire **http://127.0.0.1:3000**. La demo rifiuta l'avvio senza consenso esplicito `HPH_DEMO=true` o con un indirizzo di ascolto diverso da loopback. Non esporla tramite proxy, tunnel o rete pubblica: non è presente un sistema di autenticazione. L'integrazione PostgreSQL è facoltativa e limitata alla connessione, alle migrazioni e al health check; le schermate usano ancora dati in memoria. Vedi [docs/DATABASE.md](docs/DATABASE.md).
 
 ## Provare il flusso
 
@@ -93,7 +93,7 @@ cargo check --target wasm32-unknown-unknown --features hydrate --lib --locked
 cargo leptos build
 ```
 
-I test del dominio coprono dipendenze, permessi, azienda errata, doppia entrata, orario retrogrado, pause, disattivazione e conservazione degli eventi. I test HTTP esercitano le vere server function attraverso il router Axum e controllano il rendering SSR. Non sono test browser o prove di un database reale.
+I test del dominio coprono dipendenze, permessi, azienda errata, doppia entrata, orario retrogrado, pause, disattivazione e conservazione degli eventi. I test HTTP esercitano le vere server function attraverso il router Axum e controllano il rendering SSR. Il job PostgreSQL della CI applica le policy RLS e prova pool SQLx, migrazioni e contesto tenant contro PostgreSQL reale. Non sono test browser né provano operazioni aziendali persistite.
 
 ## Struttura
 
@@ -101,8 +101,9 @@ I test del dominio coprono dipendenze, permessi, azienda errata, doppia entrata,
 - `src/app.rs`: componenti e schermate Leptos.
 - `src/api.rs`: server function, senza accettare l'identità aziendale dal client.
 - `src/server.rs`: configurazione e stato della demo, router e test HTTP.
+- `src/database.rs`: pool PostgreSQL SQLx, migrazioni, ping e transazioni scoped per tenant.
 - `style/main.css`: layout, token, temi e adattamento mobile.
 - `docs/MODULES.md`: contratto per estendere il template.
 - `harness/PROJECT_MAP.md` e `harness/PROJECT_STATE.md`: architettura e checkpoint.
 
-Il prossimo incremento è **identità e persistenza**: autenticazione, appartenenza alle aziende, autorizzazioni per operazione e PostgreSQL. Solo dopo questi elementi HPH può ospitare dati aziendali reali.
+Il prossimo incremento è **persistenza applicativa**: repository SQLx per membership, persone, timbrature e configurazione moduli, poi autenticazione e autorizzazioni reali. Fino ad allora HPH resta una demo locale e non deve ospitare dati aziendali reali.

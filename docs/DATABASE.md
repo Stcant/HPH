@@ -17,6 +17,12 @@ The production runtime role must not own these tables and must not have `BYPASSR
 
 Composite foreign keys keep memberships and attendance events attached to a person in the same organization. An organization-scoped idempotency key prevents duplicate attendance events on request retries.
 
+## Rust connection layer
+
+The SSR server can open a bounded SQLx PostgreSQL pool with `HPH_DATABASE_URL`. If `HPH_MIGRATION_DATABASE_URL` is also set, startup applies migrations through that separate connection and then closes it. Use a migration owner for that URL and a runtime role without table ownership or `BYPASSRLS` for the runtime URL.
+
+Each database operation must start a transaction scoped to a previously verified user and organization through `Database::begin_tenant_transaction(user_id, tenant_id)`. Both RLS settings are transaction-local. The `/health` endpoint checks pool reachability when configured.
+
 ## Current limit
 
-This is a tested schema foundation. The Rust app does not yet connect to PostgreSQL: SQLx pool management, migrations at startup, transactional tenant context, and repositories are the next implementation increment. The schema does not provide authentication, admin-only permissions, payroll rules, or production readiness by itself.
+The current screens and server functions still use in-memory demo state; the pool is not yet used for people, attendance, memberships, or module configuration. SQLx connection, migration, and transaction-context behavior are exercised against PostgreSQL in CI. Authentication, repositories, admin-only permissions, payroll rules, and production readiness remain out of scope.
