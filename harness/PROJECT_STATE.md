@@ -3,7 +3,7 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: repository SQLx per la configurazione dei moduli aziendali. Stato: **verified** sul commit `ac620979cac96d78803dd1a369df07191ea55a30`; run CI 38461693770 riuscito. Il commit precedente SQLx è stato integrato in main con PR #4 (merge `e7b2d634fd119fbba74c64e60e1d187a5e4546cd`). Il progetto complessivo resta in_progress; QA browser ancora mancante.
+Incremento corrente: verifica del repository moduli con ruolo PostgreSQL non proprietario. Stato: **in progress** sul branch `test/non-owner-module-repository`; attendere CI. PR #5 è stata integrata in main con merge `0d9033ffdc951c24d2ce9ea16c66debcbbf93fb8`; i controlli su quel commit erano verdi. Il progetto complessivo resta in_progress; QA browser ancora mancante.
 Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/sqlx-database-foundation. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
 
 ## Decisioni
@@ -98,6 +98,15 @@ Aggiunto `src/module_repository.rs`: lettura tenant-scoped per membership attiva
 | Solo membership admin attiva può salvare la configurazione | PASS | Test PostgreSQL verifica round-trip admin e rifiuto per ruolo employee |
 | Formattazione, test SSR e check WASM | PASS | Job `checks` del run CI 38461693770 superato |
 
+## Verifica aggiuntiva: ruolo PostgreSQL runtime non proprietario — 2026-10-13
+
+Il primo test del repository usava una connessione superuser e quindi non esercitava davvero le policy RLS. La correzione separa il pool admin per fixture/migrazioni dal pool runtime `hph_runtime`, creato con `NOSUPERUSER NOBYPASSRLS`; il test di integrazione prova le operazioni repository sotto il ruolo runtime.
+
+| Criterio | Risultato | Evidenza |
+| --- | --- | --- |
+| Repository testato sotto RLS effettiva | PENDING | Nuova configurazione CI e test aggiunti; attendere Actions |
+| Formattazione, test SSR e check WASM | PENDING | Branch `test/non-owner-module-repository` |
+
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
 - Il rendering SSR dei componenti profondamente annidati produceva uno stack overflow. Confini dei componenti resi AnyView; successivamente tutti i 9 test sono passati con la configurazione standard, senza aumentare lo stack.
@@ -107,7 +116,7 @@ La demo perde dati e configurazioni interattive al riavvio. I profili sono sinte
 Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
 
 ## Prossima azione
-Collegare il repository moduli all'API solo dopo aver introdotto sessione autenticata e membership persistita; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
+Dopo aver confermato il test RLS con ruolo runtime non proprietario, introdurre sessione autenticata e membership persistita, poi collegare il repository moduli all'API; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
 
 ## File e lettura
 Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.
