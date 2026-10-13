@@ -115,19 +115,22 @@ pub fn router(options: LeptosOptions, state: Arc<DemoState>) -> axum::Router {
     use leptos_axum::{LeptosRoutes, generate_route_list};
     let health_database = state.database.clone();
     Router::new()
-        .route("/health", get(move || {
-            let database = health_database.clone();
-            async move {
-                use axum::http::StatusCode;
-                match database {
-                    Some(database) => match database.ping().await {
-                        Ok(()) => (StatusCode::OK, "HPH demo ready; PostgreSQL reachable"),
-                        Err(_) => (StatusCode::SERVICE_UNAVAILABLE, "HPH database unavailable"),
-                    },
-                    None => (StatusCode::OK, "HPH demo ready; data is in memory"),
+        .route(
+            "/health",
+            get(move || {
+                let database = health_database.clone();
+                async move {
+                    use axum::http::StatusCode;
+                    match database {
+                        Some(database) => match database.ping().await {
+                            Ok(()) => (StatusCode::OK, "HPH demo ready; PostgreSQL reachable"),
+                            Err(_) => (StatusCode::SERVICE_UNAVAILABLE, "HPH database unavailable"),
+                        },
+                        None => (StatusCode::OK, "HPH demo ready; data is in memory"),
+                    }
                 }
-            }
-        }))
+            }),
+        )
         .leptos_routes_with_context(
             &options,
             generate_route_list(App),
@@ -222,7 +225,12 @@ mod tests {
     #[tokio::test]
     async fn health_endpoint_reports_the_in_memory_demo_mode() {
         let response = app()
-            .oneshot(Request::builder().uri("/health").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/health")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
