@@ -28,7 +28,8 @@ pub fn catalog() -> Vec<ModuleDefinition> {
         ModuleDefinition {
             id: ModuleId::Attendance,
             name: "Time and attendance".into(),
-            description: "Clock-ins, breaks and clock-outs. A clear view of the working day.".into(),
+            description: "Clock-ins, breaks and clock-outs. A clear view of the working day."
+                .into(),
             dependencies: vec![ModuleId::People],
         },
         ModuleDefinition {

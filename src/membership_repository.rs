@@ -19,9 +19,7 @@ impl fmt::Display for MembershipError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Database(_) => f.write_str("Could not verify company membership."),
-            Self::Unauthorized => {
-                f.write_str("No active membership for the selected company.")
-            }
+            Self::Unauthorized => f.write_str("No active membership for the selected company."),
         }
     }
 }
