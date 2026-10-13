@@ -3,7 +3,7 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: pool SQLx, migrazioni PostgreSQL e contesto tenant transazionale. Stato: **in verifica CI** sul branch feat/sqlx-database-foundation. Il progetto complessivo resta in_progress; QA browser ancora mancante.
+Incremento corrente: pool SQLx, migrazioni PostgreSQL e contesto tenant transazionale. Stato: **verified** sul commit 6b3964a4acef3b1241ead813f2980c9b9a140cba; run CI 38460315357 riuscito. Il progetto complessivo resta in_progress; QA browser ancora mancante.
 Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/sqlx-database-foundation. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
 
 ## Decisioni
@@ -79,14 +79,14 @@ Scope: schema iniziale per organizzazioni, identità esterne, persone, membershi
 
 ## Incremento: fondazione SQLx applicativa — 2026-10-13
 
-Scope in verifica: pool PostgreSQL SQLx per il server SSR; migrator separabile con ruolo dedicato; helper che assegna user e tenant solo per la durata di una transazione; health check opzionale. Le server function continuano a usare lo stato demo in memoria.
+Scope verificato: pool PostgreSQL SQLx per il server SSR; migrator separabile con ruolo dedicato; helper che assegna user e tenant solo per la durata di una transazione; health check opzionale. Le server function continuano a usare lo stato demo in memoria.
 
 | Criterio | Risultato | Evidenza |
 | --- | --- | --- |
-| Pool SQLx, migrazione e tenant context compilano | IN PROGRESS | CI sul branch feat/sqlx-database-foundation |
-| Migrazione applicata due volte e pool raggiungibile su PostgreSQL | PENDING | Test database dedicato nella CI |
-| Tenant e user context sono transaction-local | PENDING | Integrazione `Database::begin_tenant_transaction` nel test PostgreSQL |
-| CI Rust, SSR, WASM e RLS preesistente | PENDING | GitHub Actions sul commit finale del branch |
+| Pool SQLx, migrazione e tenant context compilano | PASS | Run CI 38460315357: cargo fmt, test workspace e check WASM superati |
+| Migrazione applicata due volte e pool raggiungibile su PostgreSQL | PASS | Job `database` del run 38460315357; `sqlx_pool_migrates_and_scopes_tenant_context` |
+| Tenant e user context sono transaction-local | PASS | Il test legge entrambi i valori nella transazione e verifica il tenant nullo dopo il commit |
+| CI Rust, SSR, WASM e RLS preesistente | PASS | Job `checks` e `database` del run [38460315357](https://github.com/Stcant/HPH/actions/runs/38460315357) sul commit `6b3964a4acef3b1241ead813f2980c9b9a140cba` |
 
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
