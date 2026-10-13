@@ -117,7 +117,7 @@ The next functional increment is **authentication and sessions**. The SQLx repos
 
 If you made it this far, you probably followed the link on my CV—or took a very productive wrong turn on GitHub. Either way, thanks for looking beyond the bullet points.
 
-I'm Stefano. HPH is where I turn architecture decisions into working code, tests and the occasional conversation with the Rust compiler.
+I'm Stefano, and I'm building HPH in my spare time to learn Rust. I believe one of the best ways to learn a language is to write code and build something real—working through design decisions, testing ideas and occasionally negotiating with the Rust compiler.
 
 Curious about the choices behind the project? [Let's talk](https://www.linkedin.com/in/stefano-contini-464933127/). Bonus points if you mention this Easter egg.
 
