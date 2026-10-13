@@ -17,3 +17,30 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo test --workspace --features ssr --locked
       - run: cargo check --target wasm32-unknown-unknown --features hydrate --lib --locked
+
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hph_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hph_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Apply schema and verify tenant isolation
+        run: |
+          docker run --rm --network host \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -e PGPASSWORD=postgres postgres:18 \
+            psql -h 127.0.0.1 -U postgres -d hph_test -v ON_ERROR_STOP=1 \
+              -f /workspace/migrations/0001_company_data.sql \
+              -f /workspace/migrations/tests/tenant_isolation.sql
