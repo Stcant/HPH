@@ -178,8 +178,8 @@ mod tests {
         let Ok(database_url) = std::env::var("HPH_TEST_DATABASE_URL") else {
             return;
         };
-        let admin_url = std::env::var("HPH_TEST_ADMIN_DATABASE_URL")
-            .unwrap_or_else(|_| database_url.clone());
+        let admin_url =
+            std::env::var("HPH_TEST_ADMIN_DATABASE_URL").unwrap_or_else(|_| database_url.clone());
 
         let admin_database = Database::connect(&admin_url).await.unwrap();
         admin_database.migrate().await.unwrap();
@@ -258,5 +258,4 @@ mod tests {
         runtime_database.close().await;
         admin_database.close().await;
     }
-
 }
