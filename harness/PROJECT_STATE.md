@@ -3,8 +3,8 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: verifica del repository moduli con ruolo PostgreSQL non proprietario. Stato: **in progress** sul branch `test/non-owner-module-repository`; attendere CI. PR #5 è stata integrata in main con merge `0d9033ffdc951c24d2ce9ea16c66debcbbf93fb8`; i controlli su quel commit erano verdi. Il progetto complessivo resta in_progress; QA browser ancora mancante.
-Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/sqlx-database-foundation. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
+Incremento corrente: repository SQLx per la membership persistita; **in progress** sul branch `feat/persisted-membership-repository`. Il test verifica selezione tenant, ruolo, membership assente e revocata sotto RLS. PR #6 è integrata in `main` con merge `231762216f4582e5e7ffe0550497d975f7f153c6`; Actions run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) verde sul commit `85573ff444bebe43d7a09da848bd08a80608b601`. Il progetto complessivo resta in progress; autenticazione e QA browser mancano.
+Checkpoint originario: 2026-10-12. Repository pubblica `Stcant/HPH` (portfolio). Lavoro e verifiche eseguiti tramite GitHub; clone locale e test locali non disponibili in questo ambiente. CI GitHub è il gate eseguibile.
 
 ## Decisioni
 Leptos + Axum; core di dominio indipendente; catalogo e dipendenze dei moduli; CSS responsive e temi; PostgreSQL con SQLx per pool, migrazioni e contesto tenant transazionale; repository applicativi restano da integrare. La lista iniziale dei moduli è configurazione persistente per installazione, validata all'avvio. Le modifiche runtime demo restano temporanee; PostgreSQL dovrà persistere la configurazione per organizzazione. Il modello di deploy (istanza dedicata o multi-azienda) resta aperto. Dettagli e confini in [PROJECT_MAP.md](PROJECT_MAP.md).
@@ -107,6 +107,16 @@ Il primo test del repository usava una connessione superuser e quindi non eserci
 | Repository testato sotto RLS effettiva | PASS | Test `company_module_selection_is_tenant_scoped_and_admin_only` eseguito con ruolo runtime `NOSUPERUSER NOBYPASSRLS`; Actions run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093), commit testato `85573ff444bebe43d7a09da848bd08a80608b601` |
 | Formattazione, test SSR e check WASM | PASS | Job `checks` del run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) superato |
 
+## Incremento: lookup membership persistita — 2026-10-13
+
+Scope: `MembershipRepository::resolve_actor(user_id, tenant_id)` risolve l'attore solo da una membership attiva nella tenant selezionata, dentro transazione con contesto RLS. Gli UUID devono provenire da sessione autenticata; login/sessione e integrazione UI restano esclusi.
+
+| Criterio | Risultato | Evidenza |
+| --- | --- | --- |
+| Membership attiva restituisce persona, tenant e ruolo corretti anche per utenti multi-azienda | PENDING | Test PostgreSQL con due tenant e ruolo runtime non proprietario |
+| Tenant senza membership e membership revocata vengono respinti | PENDING | Test d'integrazione dedicato |
+| Formattazione, test SSR, check WASM e verifiche PostgreSQL | PENDING | CI GitHub sul branch `feat/persisted-membership-repository` |
+
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
 - Il rendering SSR dei componenti profondamente annidati produceva uno stack overflow. Confini dei componenti resi AnyView; successivamente tutti i 9 test sono passati con la configurazione standard, senza aumentare lo stack.
@@ -116,7 +126,7 @@ La demo perde dati e configurazioni interattive al riavvio. I profili sono sinte
 Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
 
 ## Prossima azione
-Dopo il test RLS con ruolo runtime non proprietario, introdurre sessione autenticata e membership persistita, poi collegare il repository moduli all'API; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
+Completare e integrare il repository membership; poi progettare autenticazione/sessioni provider-neutral e collegare il contesto di sessione ai repository, senza usare l'attore demo per query tenant-scoped; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
 
 ## File e lettura
 Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.
