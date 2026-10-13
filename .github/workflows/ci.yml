@@ -15,13 +15,8 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
-      - run: cargo test --workspace --features ssr
-      - run: cargo check --target wasm32-unknown-unknown --features hydrate --lib
-      - name: Export resolved lockfile for repository update
-        run: |
-          echo HPH_LOCK_START
-          base64 -w 8000 Cargo.lock
-          echo HPH_LOCK_END
+      - run: cargo test --workspace --features ssr --locked
+      - run: cargo check --target wasm32-unknown-unknown --features hydrate --lib --locked
 
   database:
     runs-on: ubuntu-latest
@@ -59,4 +54,4 @@ jobs:
       - name: Verify SQLx pool, migrations, and tenant context
         env:
           HPH_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/hph_app_test
-        run: cargo test --features ssr database::tests::sqlx_pool_migrates_and_scopes_tenant_context
+        run: cargo test --features ssr database::tests::sqlx_pool_migrates_and_scopes_tenant_context --locked
