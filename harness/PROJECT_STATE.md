@@ -3,7 +3,7 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: repository SQLx per la membership persistita; **in progress** sul branch `feat/persisted-membership-repository`. Il test verifica selezione tenant, ruolo, membership assente e revocata sotto RLS. PR #6 è integrata in `main` con merge `231762216f4582e5e7ffe0550497d975f7f153c6`; Actions run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) verde sul commit `85573ff444bebe43d7a09da848bd08a80608b601`. Il progetto complessivo resta in progress; autenticazione e QA browser mancano.
+Incremento corrente: repository SQLx per la membership persistita; **verified** sul branch `feat/persisted-membership-repository`. La PR #7 ha superato la CI, con lookup tenant-scoped e rifiuto delle membership assenti o revocate sotto RLS. PR #6 è integrata in `main` con merge `231762216f4582e5e7ffe0550497d975f7f153c6`; Actions run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) verde sul commit `85573ff444bebe43d7a09da848bd08a80608b601`. Il progetto complessivo resta in progress; autenticazione e QA browser mancano.
 Checkpoint originario: 2026-10-12. Repository pubblica `Stcant/HPH` (portfolio). Lavoro e verifiche eseguiti tramite GitHub; clone locale e test locali non disponibili in questo ambiente. CI GitHub è il gate eseguibile.
 
 ## Decisioni
@@ -113,9 +113,10 @@ Scope: `MembershipRepository::resolve_actor(user_id, tenant_id)` risolve l'attor
 
 | Criterio | Risultato | Evidenza |
 | --- | --- | --- |
-| Membership attiva restituisce persona, tenant e ruolo corretti anche per utenti multi-azienda | PENDING | Test PostgreSQL con due tenant e ruolo runtime non proprietario |
-| Tenant senza membership e membership revocata vengono respinti | PENDING | Test d'integrazione dedicato |
-| Formattazione, test SSR, check WASM e verifiche PostgreSQL | PENDING | CI GitHub sul branch `feat/persisted-membership-repository` |
+| Membership attiva restituisce persona, tenant e ruolo corretti anche per utenti multi-azienda | PASS | Test PostgreSQL dedicato con due tenant e ruolo runtime non proprietario |
+| Tenant senza membership e membership revocata vengono respinti | PASS | Test d'integrazione dedicato; run [38466596064](https://github.com/Stcant/HPH/actions/runs/38466596064) |
+| Formattazione, test SSR, check WASM e verifiche PostgreSQL | PASS | Job `checks` e `database` del run [38466596064](https://github.com/Stcant/HPH/actions/runs/38466596064), commit testato `a5617a2e8f68f647feb8a1b07fc379d1776292c8` |
+
 
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
@@ -126,7 +127,7 @@ La demo perde dati e configurazioni interattive al riavvio. I profili sono sinte
 Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
 
 ## Prossima azione
-Completare e integrare il repository membership; poi progettare autenticazione/sessioni provider-neutral e collegare il contesto di sessione ai repository; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
+Dopo aver integrato il repository membership, progettare autenticazione/sessioni provider-neutral e collegare il contesto di sessione ai repository; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
 
 ## File e lettura
 Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.
