@@ -14,7 +14,7 @@ HPH è attualmente una **demo locale eseguibile**, non un gestionale pronto per 
 | Design | CSS responsive con token; temi sage e indigo, nessun font remoto |
 | Build | cargo-leptos 0.3.11, Cargo.lock versionato |
 | Persistenza attuale | PostgreSQL/SQLx per infrastruttura e repository; l'interfaccia usa ancora memoria demo |
-| Persistenza prevista | PostgreSQL + SQLx, da implementare insieme all'identità aziendale |
+| Persistenza prevista | Completare autenticazione e integrare i repository SQLx nelle schermate operative |
 
 Il codice applicativo è Rust. Il browser usa anche CSS e il piccolo loader JavaScript generato da wasm-bindgen/Leptos: non serve mantenere una seconda applicazione React o TypeScript. Non sono richiesti Node o npm.
 
