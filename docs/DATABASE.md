@@ -27,6 +27,8 @@ Each database operation must start a transaction scoped to a previously verified
 
 `src/module_repository.rs` provides tenant-scoped reads and atomic writes for `hph_company_modules`. Reads require an active membership; writes additionally require an active admin membership. The repository validates module dependencies through `hph-core` and records all flags together in one transaction. It returns `None` when no company selection is stored so the caller can apply its configured preset.
 
+Its PostgreSQL CI integration test seeds fixtures through a separate admin connection, then exercises repository reads and writes through a non-owner runtime role without `BYPASSRLS`.
+
 The SSR screens and server functions do not call this repository yet. The current application still uses its in-memory demo actor, whose IDs are not database UUIDs. Connect it only after authentication supplies verified user and organization UUIDs; do not adapt the synthetic demo identity into a production database identity.
 
 ## Current limit
