@@ -3,7 +3,7 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: schema PostgreSQL aziendale e test automatico RLS. Stato: **in verifica CI** sul branch feat/company-membership-resolution. Il progetto complessivo resta in_progress; QA browser ancora mancante.
+Incremento corrente: schema PostgreSQL aziendale e test automatico RLS. Stato: **in verifica CI** sul branch feat/postgres-tenant-isolation. Il progetto complessivo resta in_progress; QA browser ancora mancante.
 Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/company-membership-resolution. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
 
 ## Decisioni
