@@ -64,6 +64,10 @@ impl Database {
         Ok(transaction)
     }
 
+    pub(crate) fn pool(&self) -> &PgPool {
+        &self.pool
+    }
+
     /// Close all pooled connections before process shutdown.
     pub async fn close(&self) {
         self.pool.close().await;
