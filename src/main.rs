@@ -9,12 +9,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     use std::sync::Arc;
 
     if std::env::var("HPH_DEMO").as_deref() != Ok("true") {
-        return Err("Questa versione è una demo locale. Imposta HPH_DEMO=true; autenticazione e database di produzione non sono ancora implementati.".into());
+        return Err("This version is a local demo. Set HPH_DEMO=true; authentication and production database integration are not implemented yet.".into());
     }
     let options = get_configuration(None)?.leptos_options;
     let address = options.site_addr;
     if !address.ip().is_loopback() {
-        return Err("La demo senza autenticazione può ascoltare solo su loopback.".into());
+        return Err("The unauthenticated demo can only listen on a loopback address.".into());
     }
     let config: Config = toml::from_str(&std::fs::read_to_string("hph.toml")?)?;
     let state = DemoState::new(config)?;
@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let runtime_database_url = std::env::var("HPH_DATABASE_URL").ok();
     let migration_database_url = std::env::var("HPH_MIGRATION_DATABASE_URL").ok();
     if migration_database_url.is_some() && runtime_database_url.is_none() {
-        return Err("HPH_MIGRATION_DATABASE_URL richiede HPH_DATABASE_URL.".into());
+        return Err("HPH_MIGRATION_DATABASE_URL requires HPH_DATABASE_URL.".into());
     }
     if let Some(database_url) = migration_database_url {
         let migration_database = Database::connect(&database_url).await?;

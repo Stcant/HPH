@@ -1,62 +1,72 @@
-# HPH — Mappa del progetto
+# HPH — Project map
 
-## Requisiti confermati
-- Progetto personale dell'utente: gestionale aziendale con timbrature e presenze, estendibile a ulteriori funzioni.
-- Template riutilizzabile: ciascuna installazione/azienda deve poter scegliere i moduli.
-- Ogni azienda deve poter comporre il proprio gestionale attivando i moduli adatti ai suoi processi; la selezione appartiene all'azienda e deve diventare persistente.
-- Dopo iniziale libertà tecnologica, l'utente ha espresso preferenza per tutta l'applicazione in Rust. Scelta adottata: Rust frontend e backend.
-- Qualità estetica e cura dell'esperienza utente sono requisiti centrali.
-- Repository pubblica di portfolio: https://github.com/Stcant/HPH, branch main. Nessuna distribuzione dell'app richiesta.
+## Confirmed requirements
 
-## Decisioni architetturali
-| Area | Scelta e motivo |
+- A personal business management project with time tracking and attendance, extensible to additional functions.
+- A reusable template: each installation/company can select its own modules.
+- Each company composes HPH around its processes; module selection belongs to the company and must become persistent in the application.
+- After initially leaving technology choices open, the owner expressed a preference for Rust throughout. Adopted choice: a Rust frontend and backend.
+- Visual quality and a carefully designed user experience are central requirements.
+- English is the default language for the interface, accessibility labels, errors, comments and documentation (requested on 2026-10-13). Preserve proper names and stable identifiers.
+- Public portfolio repository: https://github.com/Stcant/HPH, branch `main`. No application deployment requested.
+
+## Architectural decisions
+
+| Area | Choice and rationale |
 | --- | --- |
-| Frontend | Leptos 0.8, SSR + hydration WASM: componenti e contratti in Rust, una sola applicazione |
-| HTTP | Axum 0.8 + Tokio, integrazione ufficiale Leptos |
-| Organizzazione | Monolite modulare: un deploy, regole indipendenti in hph-core, niente microservizi iniziali |
-| Moduli | Catalogo tipizzato, dipendenze dichiarate e abilitazione controllata sul server; configurazione persistente per azienda nel prossimo incremento |
-| Configurazione | hph.toml per azienda, tema, preset o lista esplicita di moduli; le modifiche runtime demo sono temporanee |
-| Design | CSS con token, verde salvia e alternativa indigo; sidebar, card, tabelle e layout responsive |
-| Persistenza | Schema PostgreSQL e policy RLS testate in CI; pool SQLx, migrazioni e repository per moduli e membership. Le schermate usano ancora stato in memoria; l'API attende un'identità autenticata |
-| Identità | Contratti Rust e repository SQLx per membership attiva/ruolo/persona per tenant. Login, sessioni e collegamento del resolver alle server function restano da implementare |
+| Frontend | Leptos 0.8, SSR + WASM hydration: Rust components and contracts in one application |
+| HTTP | Axum 0.8 + Tokio, using the official Leptos integration |
+| Organization | Modular monolith: one deployment, independent rules in hph-core, no initial microservices |
+| Modules | Typed catalog, declared dependencies and server-enforced activation; persistent per-company configuration still needs application integration |
+| Configuration | hph.toml for company, theme, preset or explicit module list; demo runtime changes are temporary |
+| Design | CSS tokens, sage and indigo themes, sidebar, cards, tables and responsive layout |
+| Persistence | PostgreSQL schema and RLS policies tested in CI; SQLx pool, migrations, module and membership repositories. Screens still use in-memory state; the API awaits an authenticated identity |
+| Identity | Rust contracts and a SQLx repository for active membership, role and person per tenant. Login, sessions and connecting the resolver to server functions remain to be implemented |
+| Language | English interface and repository content; HTML language is en. UTC timestamps use an unambiguous YYYY-MM-DD display format |
 
-Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM e un ecosistema UI meno ampio rispetto a React. Leptos genera un loader JavaScript; il codice applicativo resta Rust. Non promettere assenza assoluta di JavaScript nel browser.
+Tradeoff: Rust end to end shares types and expertise, but requires WASM builds and offers a smaller UI ecosystem than React. Leptos generates a JavaScript loader; application code remains Rust. Do not claim that the browser runs no JavaScript at all.
 
-## Implementazione iniziale
-- `crates/hph-core/src/lib.rs`: catalogo e dipendenze, identità e membership aziendali, macchina a stati delle timbrature, calcolo di intervalli chiusi e test.
-- `migrations/0001_company_data.sql`: schema PostgreSQL multi-azienda e policy RLS; `migrations/tests/tenant_isolation.sql` verifica visibilità e scritture cross-company.
-- `src/database.rs`: pool SQLx, migrator runtime, ping e transazioni con contesto RLS transaction-local.
-- `src/module_repository.rs`: lettura/scrittura atomica di moduli aziendali sotto RLS, membership attiva e ruolo admin. Non è ancora collegato alle server function finché manca una sessione autenticata con UUID verificati.
-- `src/membership_repository.rs`: risolve l'attore da una membership persistita, attiva e tenant-scoped, a partire da un'identità e da un tenant già verificati dal livello di autenticazione.
+## Implementation
 
-- `src/app.rs`: dashboard, anagrafica dimostrativa, timbrature, report, configurazione moduli e componenti condivisi.
-- `src/api.rs`: server function snapshot, configurazione e timbratura. L'identità dell'attore viene dal contesto server.
-- `src/server.rs`: configurazione, stato demo in memoria, router Axum e test HTTP/SSR; health check PostgreSQL opzionale.
-- `src/main.rs`: avvio esclusivamente con HPH_DEMO=true e ascolto loopback; pool runtime e migrator separato sono opzionali via environment.
-- `style/main.css`: estetica, token e adattamento mobile; nessun font o asset remoto richiesto.
-- `Cargo.lock`: versioni risolte; `rust-toolchain.toml`: toolchain e target.
-- `.github/workflows/ci.yml`: formattazione, test SSR, controllo WASM e integrazione PostgreSQL.
+- `crates/hph-core/src/lib.rs`: catalog and dependencies, user identity and company membership, attendance state machine, closed-interval calculations and tests.
+- `migrations/0001_company_data.sql`: multi-company PostgreSQL schema and RLS policies; `migrations/tests/tenant_isolation.sql` verifies visibility and cross-company writes.
+- `src/database.rs`: SQLx pool, runtime migrator, health check and transactions with transaction-local RLS context.
+- `src/module_repository.rs`: atomic company module reads/writes under RLS, active membership and admin role checks. Not connected to server functions until an authenticated session provides verified UUIDs.
+- `src/membership_repository.rs`: resolves an actor from a persisted active membership in the selected tenant, given an identity and tenant selection validated by the authentication layer.
+- `src/app.rs`: dashboard, demo directory, time tracking, reports, module configuration and shared components.
+- `src/api.rs`: snapshot, configuration and time-entry server functions. The acting identity comes from server context.
+- `src/server.rs`: configuration, in-memory demo state, Axum router and HTTP/SSR tests; optional PostgreSQL health check.
+- `src/main.rs`: startup requires HPH_DEMO=true and a loopback address; runtime pool and separate migrator are optional environment settings.
+- `style/main.css`: visual design, tokens and mobile styles; no remote fonts or assets required.
+- `Cargo.lock`: resolved versions; `rust-toolchain.toml`: toolchain and target.
+- `.github/workflows/ci.yml`: formatting, SSR tests, WASM check and PostgreSQL integration.
 
-## Moduli
-La configurazione iniziale dell'azienda può usare un preset o una lista esplicita validata in hph.toml; la UI può cambiare la selezione durante la demo. In produzione la configurazione runtime deve essere persistita e autorizzata per organizzazione.
-Core sempre attivo. Persone contiene profili sintetici in sola lettura. Presenze dipende da Persone; Report dipende da Presenze. I moduli si disattivano senza cancellare eventi; sessioni aperte impediscono la disattivazione di Presenze. Report mostra il tempo degli intervalli chiusi della sessione, pause escluse.
+## Modules
 
-## Confini attuali
-Questa è una demo locale con una membership amministrativa sintetica. I contratti identità/membership, lo schema RLS, il repository moduli e il repository SQLx per membership persistite sono coperti dalla CI. Login, sessioni e collegamento dei repository alle server function non sono ancora integrati. Il tenant è modellato e testato nel dominio, ma questo non prova un servizio multi-azienda sicuro. Dati e modifiche ai moduli si azzerano al riavvio. Aggiornamento tra schede manuale.
+Initial company configuration can use a preset or an explicit validated list in hph.toml; the UI can change the selection during the demo. Production runtime configuration must be persisted and authorized per organization.
 
-Il percorso verso più aziende richiede membership verificata, scope tenant obbligatorio su query/mutazioni, migrazioni, vincoli e test di isolamento nel database. Nessun dato reale prima di questa fase.
+Core is always active. People contains read-only synthetic profiles. Attendance depends on People; Reports depends on Attendance. Disabling modules preserves events; open work sessions prevent Attendance from being disabled. Reports show closed work intervals in the session, excluding breaks.
 
-Timestamp UTC, orologio del server e sequenze validate. Calendario aziendale, fuso di visualizzazione, regole contrattuali, arrotondamenti, rettifiche/audit e idempotenza di richieste ritentate richiedono implementazione dedicata.
+## Current boundaries
 
-## Modello di personalizzazione
-HPH Core resta condiviso; i moduli sono funzionalità Rust versionate nel template, selezionabili dall'amministratore dell'azienda e protette sul server. Disattivarli nasconde e blocca le operazioni senza cancellare i dati. La demo applica la scelta a un solo workspace in memoria. La configurazione persistente deve essere associata all'organizzazione; il modello di distribuzione (istanza dedicata o servizio multi-azienda) resta una scelta futura, quindi il confine tenant va mantenuto esplicito fin da subito.
+This is a local demo with a synthetic administrator membership. Identity/membership contracts, RLS schema, module repository and persisted membership repository are covered by CI. Login, sessions and connecting repositories to server functions are not integrated. The tenant is modeled and tested in the domain, but this does not prove a secure multi-company service. Data and module changes reset on restart. Refreshing other tabs is manual.
 
-## Evoluzione del prodotto
-Primo flusso operativo target: autenticazione, anagrafica reale, timbrature persistenti e controllo del responsabile. Poi ferie/permessi e calendario presenze. Turni, documenti, note spese, commesse, clienti, fatturazione, magazzino e integrazioni rimangono moduli candidati. Paghe e contabilità richiedono specifiche autonome.
+Supporting multiple companies requires verified membership, mandatory tenant scope on queries/mutations, migrations, constraints and database isolation tests. No real data before this phase is complete.
 
-## Lettura
-- [Stato operativo](PROJECT_STATE.md): evidenza e prossimo passo.
-- [Avvio e limiti](../README.md).
-- [Contratto dei moduli](../docs/MODULES.md).
+Timestamps are UTC and server-generated; sequences are validated. Company calendars, display time zones, contract rules, rounding, corrections/audit and retry idempotency require dedicated application implementation.
 
-Riferimenti primari consultati: https://book.leptos.dev/getting_started/index.html ; https://book.leptos.dev/ssr/21_cargo_leptos.html ; https://github.com/leptos-rs/start-axum ; https://docs.rs/axum/latest/axum/ ; https://www.postgresql.org/docs/current/ddl-rowsecurity.html .
+## Customization model
+
+HPH Core remains shared. Modules are versioned Rust features in the template, selectable by company administrators and enforced on the server. Disabling them hides and blocks their operations without deleting data. The demo applies the selection to one in-memory workspace. Persistent configuration must be associated with the organization. The deployment model—dedicated instance or multi-company service—remains open, so the tenant boundary must stay explicit from the start.
+
+## Product evolution
+
+First target operational workflow: authentication, a real employee directory, persistent time entries and manager oversight. Then leave requests and an attendance calendar. Shifts, documents, expenses, projects, customers, invoicing, inventory and integrations remain candidate modules. Payroll and accounting require separate specifications.
+
+## Reading order
+
+- [Project state](PROJECT_STATE.md): evidence and next action.
+- [Startup and limitations](../README.md).
+- [Module contract](../docs/MODULES.md).
+
+Primary references consulted: https://book.leptos.dev/getting_started/index.html ; https://book.leptos.dev/ssr/21_cargo_leptos.html ; https://github.com/leptos-rs/start-axum ; https://docs.rs/axum/latest/axum/ ; https://www.postgresql.org/docs/current/ddl-rowsecurity.html .

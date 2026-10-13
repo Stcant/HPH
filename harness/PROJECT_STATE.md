@@ -1,133 +1,156 @@
-# HPH — Stato operativo
+# HPH — Project state
 
-## Obiettivo e fase
-Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
+## Goal and phase
 
-Ultimo incremento completato: repository SQLx per la membership persistita, **verified** e integrato in `main` con PR #7, merge `812a5bb21b232039151dd375b4671d019588e284`. Run CI [38466818515](https://github.com/Stcant/HPH/actions/runs/38466818515) verde: job `checks` e `database`; lookup tenant-scoped e rifiuto delle membership assenti o revocate sotto RLS. PR #6 è integrata in `main` con merge `231762216f4582e5e7ffe0550497d975f7f153c6`; Actions run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) verde sul commit `85573ff444bebe43d7a09da848bd08a80608b601`. Il progetto complessivo resta in progress; autenticazione e QA browser mancano.
-Checkpoint originario: 2026-10-12. Repository pubblica `Stcant/HPH` (portfolio). Lavoro e verifiche eseguiti tramite GitHub; clone locale e test locali non disponibili in questo ambiente. CI GitHub è il gate eseguibile.
+Build a reusable modular business management application with a Rust frontend/backend and a carefully designed interface. The preference for Rust on the frontend supersedes the open frontend choice from the kickoff.
 
-## Decisioni
-Leptos + Axum; core di dominio indipendente; catalogo e dipendenze dei moduli; CSS responsive e temi; PostgreSQL con SQLx per pool, migrazioni e contesto tenant transazionale; repository applicativi restano da integrare. La lista iniziale dei moduli è configurazione persistente per installazione, validata all'avvio. Le modifiche runtime demo restano temporanee; PostgreSQL dovrà persistere la configurazione per organizzazione. Il modello di deploy (istanza dedicata o multi-azienda) resta aperto. Dettagli e confini in [PROJECT_MAP.md](PROJECT_MAP.md).
+Current increment: English throughout the repository and interface, plus a recruiter Easter egg in the README. Status: **verified** in PR #8 on `chore/english-language`; merge follows the final checkpoint checks. Scope: interface and accessibility text, domain/server errors, English HTML language, unambiguous UTC date display, documentation and existing SSR assertions. Acceptance: English content across maintained files, a readable expandable README note, and passing formatting/SSR/WASM/PostgreSQL checks. No authentication or persistence behavior changes are included.
 
-## Risultato implementato
-- Dashboard, persone demo in sola lettura, timbrature, riepiloghi e configurazione moduli.
-- Preset essential/team/complete e temi sage/indigo in hph.toml; lista esplicita di moduli aziendali supportata come override persistente del preset, con dipendenze e duplicati validati all'avvio.
-- Server function reali e stato in memoria: entrata, pausa, rientro, uscita; sequenze e orario verificati dal server.
-- Attivazione con dipendenze e permesso amministratore nel dominio; disattivazione senza cancellazione degli eventi e senza interrompere sessioni aperte.
-- Avvio solo con HPH_DEMO=true e binding loopback. Un attore e un'azienda sintetici: nessuna autenticazione o persistenza reale.
-- README di avvio, contratto di estensione moduli e workflow CI.
+Previous completed increment: persisted membership SQLx repository, **verified** and integrated into `main` by PR #7, merge `812a5bb21b232039151dd375b4671d019588e284`. CI run [38466818515](https://github.com/Stcant/HPH/actions/runs/38466818515) passed both `checks` and `database`, including tenant-scoped lookup and rejection of missing or revoked memberships under RLS. PR #6 was integrated with merge `231762216f4582e5e7ffe0550497d975f7f153c6`; run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) passed on commit `85573ff444bebe43d7a09da848bd08a80608b601`. Post-merge CI [38467158574](https://github.com/Stcant/HPH/actions/runs/38467158574) passed on `1d58132cba643ba740804275056b6c22fca15050`, the base of this language change. The overall project remains in progress; authentication and browser QA are still missing.
 
-## Evidenza del 2026-10-12
-Scope: sorgenti del primo template salvati insieme a questo checkpoint; test applicati prima del commit remoto. La cronologia del commit identifica i file. Nessun test browser o database è implicato.
+Original checkpoint: 2026-10-12. Current update: 2026-10-13. Public portfolio repository: `Stcant/HPH`. Source files are available as a local snapshot fetched through GitHub; there is no local Git checkout or Rust toolchain. Rust and PostgreSQL verification runs through GitHub Actions.
 
-| Criterio | Risultato | Azione ed evidenza |
+## Decisions
+
+Leptos + Axum; independent domain core; module catalog and dependencies; responsive CSS and themes; PostgreSQL/SQLx for pooling, migrations and transaction-local tenant context. Application repositories still need to be integrated into the screens. The initial module list is persistent installation configuration validated at startup; interactive demo changes remain temporary. PostgreSQL will persist runtime configuration per organization. The deployment model (dedicated instance or multi-company service) remains open. English is the default language for maintained repository content and the UI. Details and boundaries are in [PROJECT_MAP.md](PROJECT_MAP.md).
+
+## Implemented result
+
+- Dashboard, read-only demo people directory, time tracking, summaries and module configuration.
+- essential/team/complete presets and sage/indigo themes in hph.toml; an explicit company module list can persistently override the preset, with dependency and duplicate validation at startup.
+- Real server functions with in-memory state: clock in, start break, end break and clock out; sequence and timestamp validation on the server.
+- Dependency and administrator checks for activation in the domain; disabling modules preserves events and does not interrupt open work sessions.
+- Startup only with HPH_DEMO=true and loopback binding. One synthetic actor and company: no authenticated or persistent operational application yet.
+- Startup README, module extension contract and CI workflow.
+
+## Evidence from 2026-10-12
+
+Scope: initial template sources saved with this checkpoint; tests ran before the remote commit. Commit history identifies the files. No browser or database verification is implied by this historical evidence.
+
+| Criterion | Result | Action and evidence |
 | --- | --- | --- |
-| Regole moduli, tenant e timbrature | PASS | cargo test --workspace --features ssr --locked: 6 test hph-core superati |
-| RPC reali e applicazione regole lato HTTP | PASS | Stesso comando: 2 test del router Axum superati; doppia entrata, modulo spento e dipendenze respinti |
-| Rendering server della pagina completa | PASS | Stesso comando: 1 test SSR superato; nome azienda, avviso demo, contenuto e CSS presenti |
-| Build frontend e backend | PASS | cargo-leptos 0.3.11 build: binario SSR, libreria WASM, CSS e loader generati; exit 0 |
-| Formattazione | PASS | cargo fmt --all --check: exit 0 |
-| Avvio demo esplicito e binding locale | PASS | Esecuzione del binario senza HPH_DEMO=true e con 0.0.0.0: rifiuto verificato in entrambi i casi |
-| Aspetto, mobile, navigazione e hydration nel browser | NOT RUN | Browser QA non disponibile nell'ambiente; build e SSR non provano interazione o resa visiva |
-| Autenticazione, PostgreSQL e isolamento multi-azienda | NOT RUN | Non implementati; appartengono al prossimo incremento |
+| Module, tenant and time-tracking rules | PASS | cargo test --workspace --features ssr --locked: 6 hph-core tests passed |
+| Real RPCs and HTTP rule enforcement | PASS | Same command: 2 Axum router tests passed; duplicate clock-in, disabled module and invalid dependencies rejected |
+| Full-page server rendering | PASS | Same command: 1 SSR test passed; company name, demo notice, content and CSS present |
+| Frontend and backend build | PASS | cargo-leptos 0.3.11 build: SSR binary, WASM library, CSS and loader generated; exit 0 |
+| Formatting | PASS | cargo fmt --all --check: exit 0 |
+| Explicit demo startup and local binding | PASS | Running without HPH_DEMO=true and with 0.0.0.0 was rejected in both cases |
+| Visual appearance, mobile, navigation and browser hydration | NOT RUN | Browser QA unavailable; build and SSR do not prove interaction or visual quality |
+| Authentication, PostgreSQL and multi-company isolation | NOT RUN | Not implemented at that checkpoint; subsequent increments are recorded below |
 
-## Incremento: selezione personalizzata dei moduli — 2026-10-13
+## Increment: custom module selection — 2026-10-13
 
-Scope: override `modules` di `hph.toml`, mantenimento dei preset, validazione delle dipendenze e dei duplicati. Commit sorgenti: `8f350db4aec6c1dc3974c6d67086dd9079ace1da`.
+Scope: hph.toml `modules` override, preserving presets and validating dependencies/duplicates. Source commit: `8f350db4aec6c1dc3974c6d67086dd9079ace1da`.
 
-| Criterio | Risultato | Evidenza |
+| Criterion | Result | Evidence |
 | --- | --- | --- |
-| TOML consente una lista aziendale valida che sostituisce il preset | PASS | Test `explicit_company_modules_override_preset_and_invalid_lists_fail`; TOML deserializzato, preset essential sovrascritto da people/attendance/reports |
-| Dipendenze mancanti e ID duplicati sono rifiutati senza mutare la selezione | PASS | Test `custom_module_lists_validate_dependencies_and_duplicates` e test config invalida |
-| Formattazione, test SSR e check WASM | PASS | [GitHub Actions run 38320041661](https://github.com/Stcant/HPH/actions/runs/38320041661), concluso success. Commit `8f350db4aec6c1dc3974c6d67086dd9079ace1da`; 2026-10-12T23:02:44Z–23:03:55Z. |
+| TOML accepts a valid company list that overrides the preset | PASS | `explicit_company_modules_override_preset_and_invalid_lists_fail`: TOML deserialized, essential overridden by people/attendance/reports |
+| Missing dependencies and duplicate IDs are rejected without changing the selection | PASS | `custom_module_lists_validate_dependencies_and_duplicates` and invalid configuration test |
+| Formatting, SSR tests and WASM check | PASS | [Run 38320041661](https://github.com/Stcant/HPH/actions/runs/38320041661), success on `8f350db4aec6c1dc3974c6d67086dd9079ace1da`; 2026-10-12T23:02:44Z–23:03:55Z |
 
-La selezione statica in `hph.toml` persiste tra riavvii; le modifiche dalla schermata demo restano in memoria.
+Static selection in hph.toml persists across restarts; changes made in the demo screen remain in memory.
 
-## Incremento: identità e membership — 2026-10-13
+## Increment: identity and membership — 2026-10-13
 
-Scope: contratti di dominio per identità utente e membership attiva per azienda; il server demo crea l'attore selezionando una membership esplicita. Non introduce login, sessioni o persistenza.
+Scope: domain contracts for user identity and active company membership; the demo server creates the actor from an explicit membership. This increment did not introduce login, sessions or persistence.
 
-| Criterio | Risultato | Evidenza |
+| Criterion | Result | Evidence |
 | --- | --- | --- |
-| Un utente può avere ruoli differenti in più aziende | PASS | Test `identity_resolves_only_an_active_membership_in_the_selected_company`: seleziona la membership Employee corretta, rifiuta la membership inattiva e un utente senza membership |
-| L'attore demo è derivato da una membership esplicita | PASS | `DemoState::new` chiama `UserIdentity::actor_for` |
-| Formattazione, test SSR e check WASM | PASS | [GitHub Actions run 38454681554](https://github.com/Stcant/HPH/actions/runs/38454681554), tutti gli step conclusi success; commit testato `8097d605f6ed95547dec2688cd03ce61c09ee6e3` |
+| One user can have different roles in different companies | PASS | `identity_resolves_only_an_active_membership_in_the_selected_company`: selects the correct Employee membership; rejects inactive membership and a user without membership |
+| Demo actor is derived from an explicit membership | PASS | DemoState::new calls UserIdentity::actor_for |
+| Formatting, SSR tests and WASM check | PASS | [Run 38454681554](https://github.com/Stcant/HPH/actions/runs/38454681554), all steps successful on `8097d605f6ed95547dec2688cd03ce61c09ee6e3` |
 
-Le membership restano in memoria nella demo. L'identità verificata deve arrivare da un middleware di autenticazione e la membership dovrà essere letta dal database prima delle operazioni aziendali.
+Demo memberships remain in memory. A verified identity must come from authentication middleware, and membership must be read from the database before company operations.
 
-## Incremento: schema PostgreSQL multi-azienda — 2026-10-13
+## Increment: multi-company PostgreSQL schema — 2026-10-13
 
-Scope: organizzazioni, identità esterne, persone, membership, moduli configurati e timbrature idempotenti; Row-Level Security scoped per azienda. Il repository SQL non è ancora integrato nell'app Rust.
+Scope: organizations, external identities, people, memberships, configured modules and idempotent attendance events; company-scoped Row-Level Security. The SQL repository was not yet integrated into the Rust app.
 
-| Criterio | Risultato | Evidenza |
+| Criterion | Result | Evidence |
 | --- | --- | --- |
-| Dati aziendali e coerenza tra organizzazioni | PASS | FK composte legano membership/persona e timbrature/persona alla stessa organizzazione; vincoli univoci e chiave idempotente per timbratura |
-| Letture scoped, membership proprie e blocco insert/update/delete cross-company | PASS | Script `migrations/tests/tenant_isolation.sql` eseguito contro PostgreSQL 18 in CI, run 38456551456 |
-| Test Rust, formattazione e check WASM | PASS | Job `checks` del run CI 38456551456 |
+| Company data and cross-organization consistency | PASS | Composite foreign keys bind membership/person and attendance/person to the same organization; uniqueness constraints and attendance idempotency key |
+| Scoped reads, own memberships and blocked cross-company insert/update/delete | PASS | migrations/tests/tenant_isolation.sql executed against PostgreSQL 18 in CI, run 38456551456 |
+| Rust tests, formatting and WASM check | PASS | checks job in run 38456551456 |
 
-La runtime app dovrà impostare `hph.tenant_id` e `hph.user_id` transazionalmente, verificare membership e ruoli nel servizio e usare un ruolo non proprietario senza `BYPASSRLS`; questo schema da solo non prova la sicurezza delle operazioni HTTP.
+The runtime app must set hph.tenant_id and hph.user_id transaction-locally, verify membership and roles in the service, and use a non-owner role without BYPASSRLS. This schema alone does not prove HTTP operation security.
 
-## Incremento: schema PostgreSQL e isolamento tenant — 2026-10-13
+## Increment: PostgreSQL schema and tenant isolation — 2026-10-13
 
-Scope: schema iniziale per organizzazioni, identità esterne, persone, membership, moduli aziendali e timbrature; RLS forzata sulle tabelle aziendali; test SQL con ruolo runtime senza privilegi di bypass. Non introduce repository SQLx nell'app.
+Scope: initial schema for organizations, external identities, people, memberships, company modules and attendance events; forced RLS on company tables; SQL tests with a runtime role without bypass privileges. This increment did not add SQLx repositories to the app.
 
-| Criterio | Risultato | Evidenza |
+| Criterion | Result | Evidence |
 | --- | --- | --- |
-| La migrazione PostgreSQL si applica | PASS | Job `database` del run CI 38456551456 |
-| Le query tenant-scoped non espongono righe di un'altra azienda | PASS | Test automatici di visibilità, update/delete cross-company, insert cross-company e assenza del contesto tenant |
-| Verifiche Rust e WASM restano verdi | PASS | Job `checks` dello stesso run CI |
+| PostgreSQL migration applies | PASS | database job in CI run 38456551456 |
+| Tenant-scoped queries do not expose another company's rows | PASS | Automated tests for visibility, cross-company update/delete and insert, and missing tenant context |
+| Rust and WASM checks stay green | PASS | checks job in the same CI run |
 
-## Incremento: fondazione SQLx applicativa — 2026-10-13
+## Increment: SQLx application foundation — 2026-10-13
 
-Scope verificato: pool PostgreSQL SQLx per il server SSR; migrator separabile con ruolo dedicato; helper che assegna user e tenant solo per la durata di una transazione; health check opzionale. Le server function continuano a usare lo stato demo in memoria.
+Verified scope: SQLx PostgreSQL pool for the SSR server; separable migrator using a dedicated role; helper that sets user and tenant only for the transaction's lifetime; optional health check. Server functions still use in-memory demo state.
 
-| Criterio | Risultato | Evidenza |
+| Criterion | Result | Evidence |
 | --- | --- | --- |
-| Pool SQLx, migrazione e tenant context compilano | PASS | Run CI 38460315357: cargo fmt, test workspace e check WASM superati |
-| Migrazione applicata due volte e pool raggiungibile su PostgreSQL | PASS | Job `database` del run 38460315357; `sqlx_pool_migrates_and_scopes_tenant_context` |
-| Tenant e user context sono transaction-local | PASS | Il test legge entrambi i valori nella transazione e verifica il tenant nullo dopo il commit |
-| CI Rust, SSR, WASM e RLS preesistente | PASS | Job `checks` e `database` del run [38460315357](https://github.com/Stcant/HPH/actions/runs/38460315357) sul commit `6b3964a4acef3b1241ead813f2980c9b9a140cba` |
+| SQLx pool, migration and tenant context compile | PASS | Run 38460315357: cargo fmt, workspace tests and WASM check passed |
+| Migration applies twice and PostgreSQL pool is reachable | PASS | database job in run 38460315357; sqlx_pool_migrates_and_scopes_tenant_context |
+| Tenant and user context are transaction-local | PASS | Test reads both values inside the transaction and verifies a null tenant after commit |
+| Rust, SSR, WASM and existing RLS checks | PASS | checks and database jobs in [run 38460315357](https://github.com/Stcant/HPH/actions/runs/38460315357), commit `6b3964a4acef3b1241ead813f2980c9b9a140cba` |
 
-## Incremento: repository SQLx per moduli aziendali — 2026-10-13
+## Increment: SQLx company module repository — 2026-10-13
 
-Aggiunto `src/module_repository.rs`: lettura tenant-scoped per membership attiva; scrittura atomica di tutti i flag, validazione dipendenze e controllo admin nella stessa transazione. Una selezione non ancora salvata è restituita come `None`; l'integrazione UI è rinviata finché l'identità demo sintetica non viene sostituita da UUID verificati di una sessione autenticata.
+Added src/module_repository.rs: tenant-scoped reads requiring active membership; atomic writes of every flag with dependency validation and an admin check in the same transaction. An unsaved selection returns None. UI integration is deferred until the synthetic demo identity is replaced by verified UUIDs from an authenticated session.
 
-| Criterio | Risultato | Evidenza |
+| Criterion | Result | Evidence |
 | --- | --- | --- |
-| Repository limita query e scritture al tenant tramite contesto RLS | PASS | Test PostgreSQL `company_module_selection_is_tenant_scoped_and_admin_only` superato nel job database del run 38461693770 |
-| Solo membership admin attiva può salvare la configurazione | PASS | Test PostgreSQL verifica round-trip admin e rifiuto per ruolo employee |
-| Formattazione, test SSR e check WASM | PASS | Job `checks` del run CI 38461693770 superato |
+| Repository scopes queries and writes to the tenant through RLS context | PASS | PostgreSQL test company_module_selection_is_tenant_scoped_and_admin_only passed in the database job of run 38461693770 |
+| Only active admin membership can save configuration | PASS | PostgreSQL test verifies admin round-trip and rejection of the employee role |
+| Formatting, SSR tests and WASM check | PASS | checks job in run 38461693770 passed |
 
-## Verifica aggiuntiva: ruolo PostgreSQL runtime non proprietario — 2026-10-13
+## Additional verification: non-owner PostgreSQL runtime role — 2026-10-13
 
-Il primo test del repository usava una connessione superuser e quindi non esercitava davvero le policy RLS. La correzione separa il pool admin per fixture/migrazioni dal pool runtime `hph_runtime`, creato con `NOSUPERUSER NOBYPASSRLS`; il test di integrazione prova le operazioni repository sotto il ruolo runtime.
+The first repository test used a superuser connection, so it did not actually exercise RLS policies. The correction separates the fixture/migration admin pool from the hph_runtime pool, created with NOSUPERUSER NOBYPASSRLS; integration tests exercise repository operations through the runtime role.
 
-| Criterio | Risultato | Evidenza |
+| Criterion | Result | Evidence |
 | --- | --- | --- |
-| Repository testato sotto RLS effettiva | PASS | Test `company_module_selection_is_tenant_scoped_and_admin_only` eseguito con ruolo runtime `NOSUPERUSER NOBYPASSRLS`; Actions run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093), commit testato `85573ff444bebe43d7a09da848bd08a80608b601` |
-| Formattazione, test SSR e check WASM | PASS | Job `checks` del run [38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) superato |
+| Repository tested with effective RLS | PASS | company_module_selection_is_tenant_scoped_and_admin_only ran with NOSUPERUSER NOBYPASSRLS; [run 38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093), tested commit `85573ff444bebe43d7a09da848bd08a80608b601` |
+| Formatting, SSR tests and WASM check | PASS | checks job in [run 38465298093](https://github.com/Stcant/HPH/actions/runs/38465298093) passed |
 
-## Incremento: lookup membership persistita — 2026-10-13
+## Increment: persisted membership lookup — 2026-10-13
 
-Scope: `MembershipRepository::resolve_actor(user_id, tenant_id)` risolve l'attore solo da una membership attiva nella tenant selezionata, dentro transazione con contesto RLS. Gli UUID devono provenire da sessione autenticata; login/sessione e integrazione UI restano esclusi.
+Scope: MembershipRepository::resolve_actor(user_id, tenant_id) resolves an actor only from an active membership in the selected tenant, inside an RLS-context transaction. UUIDs must come from an authenticated session; login/session and UI integration are excluded.
 
-| Criterio | Risultato | Evidenza |
+| Criterion | Result | Evidence |
 | --- | --- | --- |
-| Membership attiva restituisce persona, tenant e ruolo corretti anche per utenti multi-azienda | PASS | Test PostgreSQL dedicato con due tenant e ruolo runtime non proprietario |
-| Tenant senza membership e membership revocata vengono respinti | PASS | Test d'integrazione dedicato; run [38466596064](https://github.com/Stcant/HPH/actions/runs/38466596064) |
-| Formattazione, test SSR, check WASM e verifiche PostgreSQL | PASS | Job `checks` e `database` del run [38466596064](https://github.com/Stcant/HPH/actions/runs/38466596064), commit testato `a5617a2e8f68f647feb8a1b07fc379d1776292c8` |
+| Active membership returns the correct person, tenant and role for multi-company users | PASS | Dedicated PostgreSQL test with two tenants and a non-owner runtime role |
+| Missing membership in a tenant and revoked membership are rejected | PASS | Dedicated integration test; [run 38466596064](https://github.com/Stcant/HPH/actions/runs/38466596064) |
+| Formatting, SSR tests, WASM and PostgreSQL checks | PASS | checks and database jobs in [run 38466596064](https://github.com/Stcant/HPH/actions/runs/38466596064), tested commit `a5617a2e8f68f647feb8a1b07fc379d1776292c8` |
 
+## Increment: English language and recruiter Easter egg — 2026-10-13
 
-## Problemi rilevanti risolti
-- Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
-- Il rendering SSR dei componenti profondamente annidati produceva uno stack overflow. Confini dei componenti resi AnyView; successivamente tutti i 9 test sono passati con la configurazione standard, senza aumentare lo stack.
+Source commit: `2a21a36cd0700a0c066a971228508b56758f710b`, PR #8. [CI run 38468961276](https://github.com/Stcant/HPH/actions/runs/38468961276) passed both jobs.
 
-## Limiti e lavoro aperto
-La demo perde dati e configurazioni interattive al riavvio. I profili sono sintetici e il ruolo amministratore è fisso. Il modello tenant del dominio non costituisce isolamento di un servizio reale. Nessuna pubblicazione o esposizione esterna.
-Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| English UI, errors, accessibility and maintained documentation | PASS | Source review; existing SSR page test checks English content and `lang="en"` |
+| Formatting, workspace/SSR tests and WASM compilation | PASS | `checks` job in run 38468961276 |
+| PostgreSQL migrations, RLS and repository integration | PASS | `database` job in the same run |
+| Expandable recruiter note | PASS | README source contains the recruiter side quest and contact link |
+| Visual layout and browser interaction | NOT RUN | No browser QA in this increment |
 
-## Prossima azione
-Dopo aver integrato il repository membership, progettare autenticazione/sessioni provider-neutral e collegare il contesto di sessione ai repository; non usare l'attore demo per query SQL tenant-scoped. Poi proseguire con repository per persone e presenze. Eseguire QA browser desktop/mobile quando il checkout locale sarà disponibile. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
+## Relevant resolved problems
 
-## File e lettura
-Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.
+- An executor interruption invalidated an initial test run; valid results came from subsequent executions.
+- Deeply nested SSR component rendering caused a stack overflow. Component boundaries were converted to AnyView; all 9 tests then passed with the standard stack size.
+
+## Limitations and open work
+
+The demo loses data and interactive settings on restart. Profiles are synthetic and the administrator role is fixed. The domain tenant model does not establish isolation for a real service. No deployment or external exposure has been performed.
+
+Leave, time off, shifts, employee CRUD, corrections/audit, application-level idempotency, exports and contract rules remain to be implemented. The GitHub Template repository flag has not been changed.
+
+## Next action
+
+Merge PR #8 after the final checkpoint checks. The next functional increment remains provider-neutral authentication/sessions and connecting session context to repositories; do not use the demo actor for tenant-scoped SQL. Then implement people and attendance repositories. Run desktop/mobile browser QA when an executable build and browser environment are available. A local source snapshot is available, but Rust verification still runs through GitHub CI.
+
+## Files and reading order
+
+Code: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src and style. Configuration: hph.toml. Startup and limitations: [README](../README.md). Extensions: [MODULES](../docs/MODULES.md). Keep these two harness files as the canonical state and map.

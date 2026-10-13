@@ -21,21 +21,21 @@ pub fn catalog() -> Vec<ModuleDefinition> {
     vec![
         ModuleDefinition {
             id: ModuleId::People,
-            name: "Persone".into(),
-            description: "Il tuo team, i reparti e i contatti. Un punto di partenza condiviso."
-                .into(),
+            name: "People".into(),
+            description: "Your team, departments and contacts. A shared starting point.".into(),
             dependencies: vec![],
         },
         ModuleDefinition {
             id: ModuleId::Attendance,
-            name: "Timbrature e presenze".into(),
-            description: "Entrate, pause e uscite. Una giornata di lavoro sempre leggibile.".into(),
+            name: "Time and attendance".into(),
+            description: "Clock-ins, breaks and clock-outs. A clear view of the working day."
+                .into(),
             dependencies: vec![ModuleId::People],
         },
         ModuleDefinition {
             id: ModuleId::Reports,
-            name: "Report".into(),
-            description: "Riepiloghi delle ore registrate e delle sessioni concluse.".into(),
+            name: "Reports".into(),
+            description: "Summaries of recorded hours and completed work sessions.".into(),
             dependencies: vec![ModuleId::Attendance],
         },
     ]
@@ -78,7 +78,7 @@ impl UserIdentity {
                 person_id: membership.person_id.clone(),
                 role: membership.role,
             })
-            .ok_or_else(|| "Nessuna appartenenza attiva per l'azienda selezionata.".into())
+            .ok_or_else(|| "No active membership for the selected company.".into())
     }
 }
 
@@ -100,7 +100,7 @@ impl ModuleSet {
             "essential" => vec![ModuleId::People],
             "team" => vec![ModuleId::People, ModuleId::Attendance],
             "complete" => vec![ModuleId::People, ModuleId::Attendance, ModuleId::Reports],
-            _ => return Err("Configurazione moduli non riconosciuta.".into()),
+            _ => return Err("Unrecognized module configuration.".into()),
         };
         Self::from_enabled(enabled)
     }
@@ -109,7 +109,7 @@ impl ModuleSet {
         let mut unique = Vec::with_capacity(enabled.len());
         for id in &enabled {
             if unique.contains(id) {
-                return Err("La configurazione contiene un modulo duplicato.".into());
+                return Err("The configuration contains a duplicate module.".into());
             }
             unique.push(*id);
         }
@@ -125,7 +125,7 @@ impl ModuleSet {
                 .any(|dependency| !modules.contains(*dependency))
             {
                 return Err(format!(
-                    "{} richiede le sue dipendenze attive. Attiva prima le dipendenze oppure disattiva prima questo modulo.",
+                    "{} requires its dependencies to be enabled. Enable the dependencies first or disable this module first.",
                     definition.name
                 ));
             }
@@ -157,10 +157,10 @@ pub enum PunchKind {
 impl PunchKind {
     pub fn label(self) -> &'static str {
         match self {
-            Self::In => "Entrata",
-            Self::BreakStart => "Inizio pausa",
-            Self::BreakEnd => "Fine pausa",
-            Self::Out => "Uscita",
+            Self::In => "Clock in",
+            Self::BreakStart => "Start break",
+            Self::BreakEnd => "End break",
+            Self::Out => "Clock out",
         }
     }
 }
@@ -174,9 +174,9 @@ pub enum WorkState {
 impl WorkState {
     pub fn label(self) -> &'static str {
         match self {
-            Self::Off => "Fuori servizio",
-            Self::Working => "Al lavoro",
-            Self::Paused => "In pausa",
+            Self::Off => "Off duty",
+            Self::Working => "Working",
+            Self::Paused => "On break",
         }
     }
     pub fn next(self, kind: PunchKind) -> Result<Self, String> {
@@ -186,7 +186,7 @@ impl WorkState {
             (Self::Paused, PunchKind::BreakEnd) => Ok(Self::Working),
             (Self::Working | Self::Paused, PunchKind::Out) => Ok(Self::Off),
             _ => Err(
-                "Timbratura non valida per lo stato attuale. Aggiorna la pagina e riprova.".into(),
+                "Invalid time entry for the current status. Refresh the page and try again.".into(),
             ),
         }
     }
@@ -220,7 +220,7 @@ impl Workspace {
     pub fn authorize(&self, actor: &Actor) -> Result<(), String> {
         if actor.tenant_id != self.tenant_id || !self.people.iter().any(|p| p.id == actor.person_id)
         {
-            return Err("Accesso non autorizzato a questa azienda.".into());
+            return Err("Access to this company is not authorized.".into());
         }
         Ok(())
     }
@@ -240,7 +240,7 @@ impl Workspace {
     pub fn set_module(&mut self, actor: &Actor, id: ModuleId, enabled: bool) -> Result<(), String> {
         self.authorize(actor)?;
         if actor.role != Role::Admin {
-            return Err("Solo un amministratore può configurare i moduli.".into());
+            return Err("Only an administrator can configure modules.".into());
         }
         if !enabled
             && id == ModuleId::Attendance
@@ -249,7 +249,7 @@ impl Workspace {
                 .iter()
                 .any(|p| self.state(&p.id) != WorkState::Off)
         {
-            return Err("Chiudi tutte le sessioni aperte prima di disattivare le presenze.".into());
+            return Err("Close all open work sessions before disabling attendance.".into());
         }
         self.modules.set(id, enabled)
     }
@@ -262,7 +262,7 @@ impl Workspace {
     ) -> Result<(), String> {
         self.authorize(actor)?;
         if !self.modules.contains(ModuleId::Attendance) {
-            return Err("Il modulo presenze non è attivo.".into());
+            return Err("The attendance module is disabled.".into());
         }
         self.state(&actor.person_id).next(kind)?;
         if self
@@ -272,7 +272,7 @@ impl Workspace {
             .find(|p| p.person_id == actor.person_id)
             .is_some_and(|p| p.timestamp > timestamp)
         {
-            return Err("Orario precedente all'ultima timbratura.".into());
+            return Err("The timestamp is earlier than the last time entry.".into());
         }
         self.punches.push(Punch {
             person_id: actor.person_id.clone(),

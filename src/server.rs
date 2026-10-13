@@ -21,10 +21,10 @@ pub struct DemoState {
 impl DemoState {
     pub fn new(config: Config) -> Result<Self, String> {
         if config.organization.trim().is_empty() || config.organization.len() > 100 {
-            return Err("Nome azienda non valido.".into());
+            return Err("Invalid company name.".into());
         }
         if !["sage", "indigo"].contains(&config.theme.as_str()) {
-            return Err("Tema non valido: usa sage o indigo.".into());
+            return Err("Invalid theme: use sage or indigo.".into());
         }
         let modules = match config.modules {
             Some(enabled) => ModuleSet::from_enabled(enabled)?,
@@ -99,14 +99,14 @@ impl DemoState {
             actor_id: self.actor.person_id.clone(),
             catalog: catalog(),
             server_time: chrono::Utc::now()
-                .format("%d/%m/%Y · %H:%M UTC")
+                .format("%Y-%m-%d · %H:%M UTC")
                 .to_string(),
         }
     }
 }
 pub fn state() -> Result<Arc<DemoState>, ServerFnError> {
     use_context::<Arc<DemoState>>()
-        .ok_or_else(|| ServerFnError::new("Contesto aziendale non disponibile."))
+        .ok_or_else(|| ServerFnError::new("Company context is unavailable."))
 }
 
 pub fn router(options: LeptosOptions, state: Arc<DemoState>) -> axum::Router {
@@ -295,9 +295,10 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         let bytes = response.into_body().collect().await.unwrap().to_bytes();
         let html = String::from_utf8(bytes.to_vec()).unwrap();
+        assert!(html.contains("lang=\"en\""));
         assert!(html.contains("Test Company"));
-        assert!(html.contains("DEMO LOCALE"));
-        assert!(html.contains("Tutto al posto giusto."));
+        assert!(html.contains("LOCAL DEMO"));
+        assert!(html.contains("Everything in its place."));
         assert!(html.contains("/pkg/hph.css"));
     }
 }
