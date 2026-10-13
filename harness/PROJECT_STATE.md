@@ -3,8 +3,8 @@
 ## Obiettivo e fase
 Costruire un gestionale aziendale modulare e riutilizzabile, con frontend/backend Rust e un'interfaccia curata. La preferenza Rust anche per il frontend sostituisce la scelta frontend aperta nel kickoff.
 
-Incremento corrente: selezione personalizzata dei moduli aziendali in hph.toml. Stato: **verified** sul commit 8f350db4aec6c1dc3974c6d67086dd9079ace1da. Il progetto complessivo resta in_progress; QA browser ancora mancante.
-Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository privata Stcant/HPH; branch chore/update-repository-owner. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
+Incremento corrente: risoluzione dell'attore attraverso membership aziendali attive. Stato: **verified** sul commit 8097d605f6ed95547dec2688cd03ce61c09ee6e3. Il progetto complessivo resta in_progress; QA browser ancora mancante.
+Checkpoint originario: 2026-10-12. Aggiornamento puntamenti, direzione prodotto e configurazione moduli: 2026-10-13. Repository pubblica Stcant/HPH (portfolio); branch feat/company-membership-resolution. Base remota ispezionata: d32316c0b91532bb65f398bb2caa9c754ce0da1e. Implementazione e verifiche in una copia locale dei nuovi sorgenti, salvataggio tramite API GitHub; nessuna verifica di checkout Git locale.
 
 ## Decisioni
 Leptos + Axum; core di dominio indipendente; catalogo e dipendenze dei moduli; CSS responsive e temi; PostgreSQL + SQLx previsti per la fase successiva. La lista iniziale dei moduli è configurazione persistente per installazione, validata all'avvio. Le modifiche runtime demo restano temporanee; PostgreSQL dovrà persistere la configurazione per organizzazione. Il modello di deploy (istanza dedicata o multi-azienda) resta aperto. Dettagli e confini in [PROJECT_MAP.md](PROJECT_MAP.md).
@@ -43,6 +43,18 @@ Scope: override `modules` di `hph.toml`, mantenimento dei preset, validazione de
 
 La selezione statica in `hph.toml` persiste tra riavvii; le modifiche dalla schermata demo restano in memoria.
 
+## Incremento: identità e membership — 2026-10-13
+
+Scope: contratti di dominio per identità utente e membership attiva per azienda; il server demo crea l'attore selezionando una membership esplicita. Non introduce login, sessioni o persistenza.
+
+| Criterio | Risultato | Evidenza |
+| --- | --- | --- |
+| Un utente può avere ruoli differenti in più aziende | PASS | Test `identity_resolves_only_an_active_membership_in_the_selected_company`: seleziona la membership Employee corretta, rifiuta la membership inattiva e un utente senza membership |
+| L'attore demo è derivato da una membership esplicita | PASS | `DemoState::new` chiama `UserIdentity::actor_for` |
+| Formattazione, test SSR e check WASM | PASS | [GitHub Actions run 38454681554](https://github.com/Stcant/HPH/actions/runs/38454681554), tutti gli step conclusi success; commit testato `8097d605f6ed95547dec2688cd03ce61c09ee6e3` |
+
+Le membership restano in memoria nella demo. L'identità verificata deve arrivare da un middleware di autenticazione e la membership dovrà essere letta dal database prima delle operazioni aziendali.
+
 ## Problemi rilevanti risolti
 - Un'interruzione dell'esecutore ha invalidato una prima esecuzione dei test; i risultati validi provengono dalle esecuzioni successive.
 - Il rendering SSR dei componenti profondamente annidati produceva uno stack overflow. Confini dei componenti resi AnyView; successivamente tutti i 9 test sono passati con la configurazione standard, senza aumentare lo stack.
@@ -52,7 +64,7 @@ La demo perde dati e configurazioni interattive al riavvio. I profili sono sinte
 Ferie, permessi, turni, CRUD dipendenti, rettifiche/audit, idempotenza, esportazioni e regole contrattuali rimangono da implementare. Il flag GitHub Template repository non è stato modificato.
 
 ## Prossima azione
-Eseguire QA browser desktop/mobile con un checkout locale. Poi implementare identità, membership e PostgreSQL per persistere dati e moduli per organizzazione, con test di isolamento tra due organizzazioni. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
+Eseguire QA browser desktop/mobile con un checkout locale. Poi aggiungere autenticazione e sessioni reali, persistenza PostgreSQL di identità/membership/configurazione/dati, e test di isolamento tra due organizzazioni. Il clone locale non è disponibile in questo ambiente; il controllo Rust avviene tramite CI GitHub.
 
 ## File e lettura
 Codice: Cargo.toml/Cargo.lock, rust-toolchain.toml, crates/hph-core, src e style. Configurazione: hph.toml. Avvio e limiti: [README](../README.md). Estensioni: [MODULES](../docs/MODULES.md). Conservare questi due file harness come stato e mappa canonici.

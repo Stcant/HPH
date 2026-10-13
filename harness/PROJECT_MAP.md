@@ -6,7 +6,7 @@
 - Ogni azienda deve poter comporre il proprio gestionale attivando i moduli adatti ai suoi processi; la selezione appartiene all'azienda e deve diventare persistente.
 - Dopo iniziale libertà tecnologica, l'utente ha espresso preferenza per tutta l'applicazione in Rust. Scelta adottata: Rust frontend e backend.
 - Qualità estetica e cura dell'esperienza utente sono requisiti centrali.
-- Repository privata: https://github.com/Stcant/HPH, branch main. Nessuna pubblicazione richiesta.
+- Repository pubblica di portfolio: https://github.com/Stcant/HPH, branch main. Nessuna distribuzione dell'app richiesta.
 
 ## Decisioni architetturali
 | Area | Scelta e motivo |
@@ -18,12 +18,12 @@
 | Configurazione | hph.toml per azienda, tema, preset o lista esplicita di moduli; le modifiche runtime demo sono temporanee |
 | Design | CSS con token, verde salvia e alternativa indigo; sidebar, card, tabelle e layout responsive |
 | Persistenza futura | PostgreSQL + SQLx: organizzazione, membership, dati e configurazione moduli scoped per azienda; non presente nel codice attuale |
-| Identità futura | Sessioni autenticate e membership aziendale sul server, ruolo e permessi per operazione; provider da selezionare |
+| Identità | Contratti Rust per identità utente e membership attiva per azienda con ruolo; resolver seleziona l'attore per tenant. Login, sessioni e storage membership restano da implementare |
 
 Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM e un ecosistema UI meno ampio rispetto a React. Leptos genera un loader JavaScript; il codice applicativo resta Rust. Non promettere assenza assoluta di JavaScript nel browser.
 
 ## Implementazione iniziale
-- `crates/hph-core/src/lib.rs`: catalogo e dipendenze, identità del dominio, macchina a stati delle timbrature, calcolo di intervalli chiusi e test.
+- `crates/hph-core/src/lib.rs`: catalogo e dipendenze, identità e membership aziendali, macchina a stati delle timbrature, calcolo di intervalli chiusi e test.
 - `src/app.rs`: dashboard, anagrafica dimostrativa, timbrature, report, configurazione moduli e componenti condivisi.
 - `src/api.rs`: server function snapshot, configurazione e timbratura. L'identità dell'attore viene dal contesto server.
 - `src/server.rs`: configurazione, stato demo in memoria, router Axum e test HTTP/SSR.
@@ -37,7 +37,7 @@ La configurazione iniziale dell'azienda può usare un preset o una lista esplici
 Core sempre attivo. Persone contiene profili sintetici in sola lettura. Presenze dipende da Persone; Report dipende da Presenze. I moduli si disattivano senza cancellare eventi; sessioni aperte impediscono la disattivazione di Presenze. Report mostra il tempo degli intervalli chiusi della sessione, pause escluse.
 
 ## Confini attuali
-Questa è una demo locale con un'azienda e un attore amministratore fisso. Non ci sono login, ruoli selezionabili, database o isolamento HTTP di più aziende. Il tenant è modellato e testato nel dominio, ma questo non prova un servizio multi-azienda sicuro. Dati e modifiche ai moduli si azzerano al riavvio. Aggiornamento tra schede manuale.
+Questa è una demo locale con una membership amministrativa sintetica. I contratti identità/membership ora risolvono l'attore per tenant nel dominio, ma non ci sono login, sessioni, membership persistite, database o isolamento HTTP di più aziende. Il tenant è modellato e testato nel dominio, ma questo non prova un servizio multi-azienda sicuro. Dati e modifiche ai moduli si azzerano al riavvio. Aggiornamento tra schede manuale.
 
 Il percorso verso più aziende richiede membership verificata, scope tenant obbligatorio su query/mutazioni, migrazioni, vincoli e test di isolamento nel database. Nessun dato reale prima di questa fase.
 

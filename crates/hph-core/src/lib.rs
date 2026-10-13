@@ -47,6 +47,41 @@ pub enum Role {
     Admin,
 }
 
+/// A user identity established by an authentication layer.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UserIdentity {
+    pub id: String,
+}
+
+/// An explicit link between a user and one company.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Membership {
+    pub user_id: String,
+    pub tenant_id: String,
+    pub person_id: String,
+    pub role: Role,
+    pub active: bool,
+}
+
+impl UserIdentity {
+    /// Resolve the actor only from an active membership in the selected company.
+    pub fn actor_for(&self, tenant_id: &str, memberships: &[Membership]) -> Result<Actor, String> {
+        memberships
+            .iter()
+            .find(|membership| {
+                membership.active
+                    && membership.user_id == self.id
+                    && membership.tenant_id == tenant_id
+            })
+            .map(|membership| Actor {
+                tenant_id: membership.tenant_id.clone(),
+                person_id: membership.person_id.clone(),
+                role: membership.role,
+            })
+            .ok_or_else(|| "Nessuna appartenenza attiva per l'azienda selezionata.".into())
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Actor {
     pub tenant_id: String,
@@ -299,6 +334,47 @@ mod tests {
         };
         (workspace, actor)
     }
+    #[test]
+    fn identity_resolves_only_an_active_membership_in_the_selected_company() {
+        let identity = UserIdentity {
+            id: "user-1".into(),
+        };
+        let memberships = vec![
+            Membership {
+                user_id: "user-1".into(),
+                tenant_id: "company-a".into(),
+                person_id: "person-a".into(),
+                role: Role::Admin,
+                active: true,
+            },
+            Membership {
+                user_id: "user-1".into(),
+                tenant_id: "company-b".into(),
+                person_id: "person-b".into(),
+                role: Role::Employee,
+                active: true,
+            },
+            Membership {
+                user_id: "user-1".into(),
+                tenant_id: "company-c".into(),
+                person_id: "person-c".into(),
+                role: Role::Admin,
+                active: false,
+            },
+        ];
+
+        let actor = identity.actor_for("company-b", &memberships).unwrap();
+        assert_eq!(actor.tenant_id, "company-b");
+        assert_eq!(actor.person_id, "person-b");
+        assert_eq!(actor.role, Role::Employee);
+        assert!(identity.actor_for("company-c", &memberships).is_err());
+
+        let stranger = UserIdentity {
+            id: "user-2".into(),
+        };
+        assert!(stranger.actor_for("company-a", &memberships).is_err());
+    }
+
     #[test]
     fn dependency_changes_are_atomic() {
         let mut modules = ModuleSet::preset("complete").unwrap();
