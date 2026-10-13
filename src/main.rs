@@ -16,6 +16,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !address.ip().is_loopback() {
         return Err("La demo senza autenticazione può ascoltare solo su loopback.".into());
     }
+    let config: Config = toml::from_str(&std::fs::read_to_string("hph.toml")?)?;
+    let state = DemoState::new(config)?;
+
     let runtime_database_url = std::env::var("HPH_DATABASE_URL").ok();
     let migration_database_url = std::env::var("HPH_MIGRATION_DATABASE_URL").ok();
     if migration_database_url.is_some() && runtime_database_url.is_none() {
@@ -31,7 +34,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => None,
     };
 
-    let config: Config = toml::from_str(&std::fs::read_to_string("hph.toml")?)?;
     let state = DemoState::new(config)?;
     let state = Arc::new(match database {
         Some(database) => state.with_database(database),
