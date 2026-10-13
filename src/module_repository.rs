@@ -172,31 +172,34 @@ mod tests {
     use super::*;
     use crate::database::Database;
 
-    /// Runs against the isolated PostgreSQL database provisioned in CI.
+    /// Runs with a non-owner runtime role in CI; fixture setup uses a separate admin pool.
     #[tokio::test]
     async fn company_module_selection_is_tenant_scoped_and_admin_only() {
         let Ok(database_url) = std::env::var("HPH_TEST_DATABASE_URL") else {
             return;
         };
+        let admin_url = std::env::var("HPH_TEST_ADMIN_DATABASE_URL")
+            .unwrap_or_else(|_| database_url.clone());
 
-        let database = Database::connect(&database_url).await.unwrap();
-        database.migrate().await.unwrap();
+        let admin_database = Database::connect(&admin_url).await.unwrap();
+        admin_database.migrate().await.unwrap();
+        let runtime_database = Database::connect(&database_url).await.unwrap();
         let slug: String =
             sqlx::query_scalar("SELECT 'repo-test-' || substr(md5(random()::text), 1, 16)")
-                .fetch_one(database.pool())
+                .fetch_one(admin_database.pool())
                 .await
                 .unwrap();
         let tenant_id: Uuid = sqlx::query_scalar(
             "INSERT INTO hph_organizations (slug, name) VALUES ($1, 'Repository test') RETURNING id",
         )
         .bind(&slug)
-        .fetch_one(database.pool())
+        .fetch_one(admin_database.pool())
         .await
         .unwrap();
         let user_id: Uuid = sqlx::query_scalar(
             "INSERT INTO hph_users (display_name) VALUES ('Repository test user') RETURNING id",
         )
-        .fetch_one(database.pool())
+        .fetch_one(admin_database.pool())
         .await
         .unwrap();
         let person_id: Uuid = sqlx::query_scalar(
@@ -204,7 +207,7 @@ mod tests {
              VALUES ($1, 'repo-test', 'Repository test user') RETURNING id",
         )
         .bind(tenant_id)
-        .fetch_one(database.pool())
+        .fetch_one(admin_database.pool())
         .await
         .unwrap();
         sqlx::query(
@@ -214,11 +217,11 @@ mod tests {
         .bind(tenant_id)
         .bind(user_id)
         .bind(person_id)
-        .execute(database.pool())
+        .execute(admin_database.pool())
         .await
         .unwrap();
 
-        let repository = CompanyModuleRepository::new(&database);
+        let repository = CompanyModuleRepository::new(&runtime_database);
         assert!(repository.load(user_id, tenant_id).await.unwrap().is_none());
         let selected = ModuleSet::preset("complete").unwrap();
         repository
@@ -234,7 +237,7 @@ mod tests {
         )
         .bind(tenant_id)
         .bind(user_id)
-        .execute(database.pool())
+        .execute(admin_database.pool())
         .await
         .unwrap();
         assert!(matches!(
@@ -244,14 +247,16 @@ mod tests {
 
         sqlx::query("DELETE FROM hph_organizations WHERE id = $1")
             .bind(tenant_id)
-            .execute(database.pool())
+            .execute(admin_database.pool())
             .await
             .unwrap();
         sqlx::query("DELETE FROM hph_users WHERE id = $1")
             .bind(user_id)
-            .execute(database.pool())
+            .execute(admin_database.pool())
             .await
             .unwrap();
-        database.close().await;
+        runtime_database.close().await;
+        admin_database.close().await;
     }
+
 }
