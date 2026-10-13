@@ -4,9 +4,17 @@
 
 La composizione dei moduli è dichiarata in `crates/hph-core/src/lib.rs`: `ModuleId`, `catalog()` e `ModuleSet`. È una fonte condivisa compilata sia per il server sia per il browser. Non mantenere un secondo elenco JavaScript o un secondo motore di dipendenze nella UI.
 
+La scelta dei moduli è una configurazione dell'azienda: HPH Core è sempre presente e ogni azienda abilita le funzioni adatte ai propri processi. I moduli restano codice Rust del template, compilato e versionato; non sono plugin di terze parti caricati a runtime. La demo mantiene la scelta solo in memoria; il prossimo livello persistente deve associarla all'organizzazione autenticata.
+
 Il core è sempre presente. I moduli attuali formano una catena: Persone → Presenze → Report. Per attivare un modulo, le sue dipendenze devono essere attive; per disattivarne una, occorre disattivare prima i moduli che la usano. Una modifica non valida non altera lo stato precedente.
 
 Disabilitare un modulo deve interromperne le operazioni protette e nascondere le schermate applicabili, **senza eliminare i dati**. Le sessioni di timbratura aperte impediscono di disattivare Presenze.
+
+## Personalizzare una singola installazione aziendale
+
+In `hph.toml` si può impostare `modules` come lista esplicita di ID (`people`, `attendance`, `reports`). La lista opzionale sostituisce `preset` e viene validata all'avvio: dipendenze mancanti o ID duplicati fanno rifiutare la configurazione. L'esempio commentato è in `hph.toml`.
+
+Questa è una configurazione iniziale persistente per l'installazione dell'azienda. Le modifiche dalla schermata demo sono ancora temporanee e si azzerano al riavvio; la persistenza delle impostazioni runtime per organizzazione arriverà con il database.
 
 ## Aggiungere un modulo
 

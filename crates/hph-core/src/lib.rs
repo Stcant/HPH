@@ -67,22 +67,27 @@ impl ModuleSet {
             "complete" => vec![ModuleId::People, ModuleId::Attendance, ModuleId::Reports],
             _ => return Err("Configurazione moduli non riconosciuta.".into()),
         };
-        Ok(Self { enabled })
+        Self::from_enabled(enabled)
     }
-    pub fn contains(&self, id: ModuleId) -> bool {
-        self.enabled.contains(&id)
-    }
-    pub fn set(&mut self, id: ModuleId, enabled: bool) -> Result<(), String> {
-        let mut next = self.clone();
-        next.enabled.retain(|value| *value != id);
-        if enabled {
-            next.enabled.push(id);
+    /// Build a company-specific module selection and validate all dependencies.
+    pub fn from_enabled(enabled: Vec<ModuleId>) -> Result<Self, String> {
+        let mut unique = Vec::with_capacity(enabled.len());
+        for id in &enabled {
+            if unique.contains(id) {
+                return Err("La configurazione contiene un modulo duplicato.".into());
+            }
+            unique.push(*id);
         }
-        for definition in catalog().iter().filter(|m| next.contains(m.id)) {
+
+        let modules = Self { enabled };
+        for definition in catalog()
+            .iter()
+            .filter(|module| modules.contains(module.id))
+        {
             if definition
                 .dependencies
                 .iter()
-                .any(|dependency| !next.contains(*dependency))
+                .any(|dependency| !modules.contains(*dependency))
             {
                 return Err(format!(
                     "{} richiede le sue dipendenze attive. Attiva prima le dipendenze oppure disattiva prima questo modulo.",
@@ -90,7 +95,18 @@ impl ModuleSet {
                 ));
             }
         }
-        *self = next;
+        Ok(modules)
+    }
+    pub fn contains(&self, id: ModuleId) -> bool {
+        self.enabled.contains(&id)
+    }
+    pub fn set(&mut self, id: ModuleId, enabled: bool) -> Result<(), String> {
+        let mut next_enabled = self.enabled.clone();
+        next_enabled.retain(|value| *value != id);
+        if enabled {
+            next_enabled.push(id);
+        }
+        *self = Self::from_enabled(next_enabled)?;
         Ok(())
     }
 }
@@ -293,6 +309,19 @@ mod tests {
         assert!(modules.set(ModuleId::Reports, true).is_err());
         assert!(!modules.contains(ModuleId::Reports));
     }
+    #[test]
+    fn custom_module_lists_validate_dependencies_and_duplicates() {
+        let modules = ModuleSet::from_enabled(vec![
+            ModuleId::People,
+            ModuleId::Attendance,
+            ModuleId::Reports,
+        ])
+        .unwrap();
+        assert!(modules.contains(ModuleId::Reports));
+        assert!(ModuleSet::from_enabled(vec![ModuleId::Reports]).is_err());
+        assert!(ModuleSet::from_enabled(vec![ModuleId::People, ModuleId::People]).is_err());
+    }
+
     #[test]
     fn full_shift_excludes_pause_and_handles_midnight() {
         let (mut w, a) = fixture();

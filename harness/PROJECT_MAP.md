@@ -3,9 +3,10 @@
 ## Requisiti confermati
 - Progetto personale dell'utente: gestionale aziendale con timbrature e presenze, estendibile a ulteriori funzioni.
 - Template riutilizzabile: ciascuna installazione/azienda deve poter scegliere i moduli.
+- Ogni azienda deve poter comporre il proprio gestionale attivando i moduli adatti ai suoi processi; la selezione appartiene all'azienda e deve diventare persistente.
 - Dopo iniziale libertà tecnologica, l'utente ha espresso preferenza per tutta l'applicazione in Rust. Scelta adottata: Rust frontend e backend.
 - Qualità estetica e cura dell'esperienza utente sono requisiti centrali.
-- Repository privata: https://github.com/consteuni/HPH, branch main. Nessuna pubblicazione richiesta.
+- Repository privata: https://github.com/Stcant/HPH, branch main. Nessuna pubblicazione richiesta.
 
 ## Decisioni architetturali
 | Area | Scelta e motivo |
@@ -13,10 +14,10 @@
 | Frontend | Leptos 0.8, SSR + hydration WASM: componenti e contratti in Rust, una sola applicazione |
 | HTTP | Axum 0.8 + Tokio, integrazione ufficiale Leptos |
 | Organizzazione | Monolite modulare: un deploy, regole indipendenti in hph-core, niente microservizi iniziali |
-| Moduli | Catalogo tipizzato, dipendenze dichiarate e abilitazione controllata sul server |
-| Configurazione | hph.toml per nome azienda, tema e preset iniziale; interfaccia per attivazioni della sessione demo |
+| Moduli | Catalogo tipizzato, dipendenze dichiarate e abilitazione controllata sul server; configurazione persistente per azienda nel prossimo incremento |
+| Configurazione | hph.toml per azienda, tema, preset o lista esplicita di moduli; le modifiche runtime demo sono temporanee |
 | Design | CSS con token, verde salvia e alternativa indigo; sidebar, card, tabelle e layout responsive |
-| Persistenza futura | PostgreSQL + SQLx: scelta per la fase di identità/persistenza, non presente nel codice attuale |
+| Persistenza futura | PostgreSQL + SQLx: organizzazione, membership, dati e configurazione moduli scoped per azienda; non presente nel codice attuale |
 | Identità futura | Sessioni autenticate e membership aziendale sul server, ruolo e permessi per operazione; provider da selezionare |
 
 Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM e un ecosistema UI meno ampio rispetto a React. Leptos genera un loader JavaScript; il codice applicativo resta Rust. Non promettere assenza assoluta di JavaScript nel browser.
@@ -32,6 +33,7 @@ Compromesso: Rust end-to-end condivide tipi e competenze, ma comporta build WASM
 - `.github/workflows/ci.yml`: formattazione, test SSR e controllo WASM.
 
 ## Moduli
+La configurazione iniziale dell'azienda può usare un preset o una lista esplicita validata in hph.toml; la UI può cambiare la selezione durante la demo. In produzione la configurazione runtime deve essere persistita e autorizzata per organizzazione.
 Core sempre attivo. Persone contiene profili sintetici in sola lettura. Presenze dipende da Persone; Report dipende da Presenze. I moduli si disattivano senza cancellare eventi; sessioni aperte impediscono la disattivazione di Presenze. Report mostra il tempo degli intervalli chiusi della sessione, pause escluse.
 
 ## Confini attuali
@@ -40,6 +42,9 @@ Questa è una demo locale con un'azienda e un attore amministratore fisso. Non c
 Il percorso verso più aziende richiede membership verificata, scope tenant obbligatorio su query/mutazioni, migrazioni, vincoli e test di isolamento nel database. Nessun dato reale prima di questa fase.
 
 Timestamp UTC, orologio del server e sequenze validate. Calendario aziendale, fuso di visualizzazione, regole contrattuali, arrotondamenti, rettifiche/audit e idempotenza di richieste ritentate richiedono implementazione dedicata.
+
+## Modello di personalizzazione
+HPH Core resta condiviso; i moduli sono funzionalità Rust versionate nel template, selezionabili dall'amministratore dell'azienda e protette sul server. Disattivarli nasconde e blocca le operazioni senza cancellare i dati. La demo applica la scelta a un solo workspace in memoria. La configurazione persistente deve essere associata all'organizzazione; il modello di distribuzione (istanza dedicata o servizio multi-azienda) resta una scelta futura, quindi il confine tenant va mantenuto esplicito fin da subito.
 
 ## Evoluzione del prodotto
 Primo flusso operativo target: autenticazione, anagrafica reale, timbrature persistenti e controllo del responsabile. Poi ferie/permessi e calendario presenze. Turni, documenti, note spese, commesse, clienti, fatturazione, magazzino e integrazioni rimangono moduli candidati. Paghe e contabilità richiedono specifiche autonome.

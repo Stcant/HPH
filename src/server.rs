@@ -9,6 +9,8 @@ pub struct Config {
     pub organization: String,
     pub theme: String,
     pub preset: String,
+    /// Optional explicit module selection; when present it overrides the named preset.
+    pub modules: Option<Vec<ModuleId>>,
 }
 
 pub struct DemoState {
@@ -23,6 +25,10 @@ impl DemoState {
         if !["sage", "indigo"].contains(&config.theme.as_str()) {
             return Err("Tema non valido: usa sage o indigo.".into());
         }
+        let modules = match config.modules {
+            Some(enabled) => ModuleSet::from_enabled(enabled)?,
+            None => ModuleSet::preset(&config.preset)?,
+        };
         let people = [
             (
                 "elena",
@@ -66,7 +72,7 @@ impl DemoState {
                 tenant_id: "demo".into(),
                 organization: config.organization,
                 theme: config.theme,
-                modules: ModuleSet::preset(&config.preset)?,
+                modules,
                 people,
                 punches: vec![],
             }),
@@ -127,6 +133,7 @@ mod tests {
                     organization: "Test Company".into(),
                     theme: "sage".into(),
                     preset: "team".into(),
+                    modules: None,
                 })
                 .unwrap(),
             ),
@@ -149,6 +156,39 @@ mod tests {
         let status = response.status();
         let bytes = response.into_body().collect().await.unwrap().to_bytes();
         (status, String::from_utf8(bytes.to_vec()).unwrap())
+    }
+
+    #[test]
+    fn explicit_company_modules_override_preset_and_invalid_lists_fail() {
+        let config: Config = toml::from_str(
+            r#"
+                organization = "Custom Company"
+                theme = "sage"
+                preset = "essential"
+                modules = ["people", "attendance", "reports"]
+            "#,
+        )
+        .unwrap();
+        let state = DemoState::new(config).unwrap();
+        assert!(
+            state
+                .workspace
+                .lock()
+                .unwrap()
+                .modules
+                .contains(ModuleId::Reports)
+        );
+
+        let invalid: Config = toml::from_str(
+            r#"
+                organization = "Invalid Company"
+                theme = "sage"
+                preset = "complete"
+                modules = ["reports"]
+            "#,
+        )
+        .unwrap();
+        assert!(DemoState::new(invalid).is_err());
     }
 
     #[tokio::test]
