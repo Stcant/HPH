@@ -5,6 +5,9 @@ pub mod app;
 pub mod database;
 
 #[cfg(feature = "ssr")]
+pub mod membership_repository;
+
+#[cfg(feature = "ssr")]
 pub mod module_repository;
 
 #[cfg(feature = "ssr")]
