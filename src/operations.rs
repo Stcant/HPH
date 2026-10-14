@@ -274,7 +274,7 @@ pub async fn snapshot(db: &Database, s: &Session) -> AppResult<Snapshot> {
         vec![]
     };
     let audit = if access.admin {
-        sqlx::query_as("SELECT action,detail,to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS') FROM hph_audit WHERE organization_id=$1 ORDER BY id DESC LIMIT 50").bind(access.tenant).fetch_all(&mut *tx).await?
+        sqlx::query_as("SELECT a.action,u.display_name || ': ' || a.detail,to_char(a.created_at AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS') FROM hph_audit a JOIN hph_users u ON u.id=a.actor_user_id WHERE a.organization_id=$1 ORDER BY a.id DESC LIMIT 50").bind(access.tenant).fetch_all(&mut *tx).await?
     } else {
         vec![]
     };

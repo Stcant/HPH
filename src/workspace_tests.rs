@@ -78,6 +78,15 @@ async fn operational_http_workflow_is_persistent_scoped_and_authorized() {
     let runtime = Database::connect(&runtime_url).await.unwrap();
     runtime.verify_runtime_role().await.unwrap();
     assert!(admin.verify_runtime_role().await.is_err());
+    assert!(
+        WebState::new(runtime.clone(), "http://example.test".into())
+            .await
+            .is_err()
+    );
+    let secure_state = WebState::new(runtime.clone(), "https://example.test".into())
+        .await
+        .unwrap();
+    assert!(super::cookie(&secure_state, "opaque", 28800).contains("; Secure"));
     let state = WebState::new(runtime.clone(), "http://127.0.0.1:3000".into())
         .await
         .unwrap();
@@ -157,6 +166,16 @@ async fn operational_http_workflow_is_persistent_scoped_and_authorized() {
         .await
         .is_err()
     );
+    assert!(
+        op::set_modules(&runtime, &session, vec!["people".into()])
+            .await
+            .is_err()
+    );
+    assert!(
+        op::add_note(&runtime, &session, "Disabled module")
+            .await
+            .is_err()
+    );
     let event = data.events[0].id;
     let at = chrono::Utc::now().timestamp() - 3600;
     op::correct(
@@ -198,6 +217,17 @@ async fn operational_http_workflow_is_persistent_scoped_and_authorized() {
         data.audit
             .iter()
             .any(|r| r.0 == "attendance.corrected" && r.1.contains("Corrected forgotten"))
+    );
+    assert!(
+        op::correct(
+            &runtime,
+            &session,
+            data.events[1].id,
+            at - 1,
+            "Reversed sequence"
+        )
+        .await
+        .is_err()
     );
     // A new process/router reads the same data and existing session from PostgreSQL.
     let app2 = router(
@@ -313,6 +343,60 @@ async fn operational_http_workflow_is_persistent_scoped_and_authorized() {
     .await
     .unwrap();
     assert!(op::snapshot(&runtime, &employee).await.is_err());
+    // A real second company validates multi-company selection, isolation and stale-form rejection.
+    auth::bootstrap(
+        &admin,
+        email.clone(),
+        "correct horse battery staple".into(),
+        "Test Owner".into(),
+        "Second company".into(),
+        format!("second-{suffix}"),
+    )
+    .await
+    .unwrap();
+    let other = op::companies(&runtime, &session)
+        .await
+        .unwrap()
+        .into_iter()
+        .find(|(id, _)| *id != tenant)
+        .unwrap()
+        .0;
+    assert!(
+        op::select_company(&runtime, &employee, other)
+            .await
+            .is_err()
+    );
+    op::select_company(&runtime, &session, other).await.unwrap();
+    let selected = auth::session(&runtime, token).await.unwrap();
+    assert_ne!(selected.csrf, session.csrf);
+    assert!(
+        op::snapshot(&runtime, &selected)
+            .await
+            .unwrap()
+            .events
+            .is_empty()
+    );
+    assert!(
+        op::correct(&runtime, &selected, event, at, "Foreign event")
+            .await
+            .is_err()
+    );
+    assert_eq!(
+        request(
+            app.clone(),
+            "/notes/add",
+            Some(&[("csrf", &session.csrf), ("body", "Stale company form")]),
+            Some(&cookie),
+            true
+        )
+        .await
+        .0,
+        StatusCode::FORBIDDEN
+    );
+    op::select_company(&runtime, &selected, tenant)
+        .await
+        .unwrap();
+    session = auth::session(&runtime, token).await.unwrap();
     // RLS denies a tenant-less read, and audit rows cannot be edited by the runtime role.
     let count: i64 = sqlx::query_scalar("SELECT count(*) FROM hph_people")
         .fetch_one(runtime.pool())
@@ -350,6 +434,44 @@ async fn operational_http_workflow_is_persistent_scoped_and_authorized() {
         .await
         .unwrap();
     assert!(auth::session(&runtime, token).await.is_err());
+    // Password changes revoke every session, not only the browser performing the change.
+    let cookie_a = sign_in(app.clone(), &email).await;
+    let cookie_b = sign_in(app.clone(), &email).await;
+    let token_a = cookie_a.strip_prefix("hph_session=").unwrap();
+    let token_b = cookie_b.strip_prefix("hph_session=").unwrap();
+    let account = auth::session(&runtime, token_a).await.unwrap();
+    let (status, _, _) = request(
+        app.clone(),
+        "/auth/password",
+        Some(&[
+            ("csrf", &account.csrf),
+            ("current_password", "correct horse battery staple"),
+            ("new_password", "a different strong password"),
+        ]),
+        Some(&cookie_a),
+        true,
+    )
+    .await;
+    assert_eq!(status, StatusCode::SEE_OTHER);
+    assert!(auth::session(&runtime, token_a).await.is_err());
+    assert!(auth::session(&runtime, token_b).await.is_err());
+    for _ in 0..5 {
+        assert!(
+            auth::login(&runtime, &email, "wrong".into(), &state.dummy)
+                .await
+                .is_err()
+        );
+    }
+    assert!(
+        auth::login(
+            &runtime,
+            &email,
+            "a different strong password".into(),
+            &state.dummy
+        )
+        .await
+        .is_err()
+    );
     runtime.close().await;
     admin.close().await;
 }
