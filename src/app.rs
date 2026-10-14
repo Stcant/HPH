@@ -306,8 +306,8 @@ fn Modules(
     let cards = data.catalog.into_iter().map(|definition| {
         let id = definition.id;
         let enabled = data.workspace.modules.contains(id);
-        let dependency = match id { ModuleId::People => "No dependencies", ModuleId::Attendance => "Requires People", ModuleId::Reports => "Requires Time and attendance" };
-        let icon = match id { ModuleId::People => "people", ModuleId::Attendance => "clock", ModuleId::Reports => "chart" };
+        let dependency = match id { ModuleId::Notes => "Requires People", ModuleId::People => "No dependencies", ModuleId::Attendance => "Requires People", ModuleId::Reports => "Requires Time and attendance" };
+        let icon = match id { ModuleId::Notes => "modules", ModuleId::People => "people", ModuleId::Attendance => "clock", ModuleId::Reports => "chart" };
         let label = format!("{} {}", if enabled { "Disable" } else { "Enable" }, definition.name);
         view! { <article class="module-card" class:enabled><div class="module-top"><span class="icon-tile"><Icon name=icon/></span><span class="pill" class:active-pill=enabled>{if enabled { "Active" } else { "Available" }}</span></div><h2>{definition.name}</h2><p>{definition.description}</p><small>{dependency}</small><button class="module-toggle" role="switch" aria-label=label aria-checked=enabled.to_string() disabled=move || busy.get() on:click=move |_| dispatch(Command::Module(id, !enabled), busy, message, refresh)><span>{if enabled { "Module enabled" } else { "Enable module" }}</span><span class="switch" class:on=enabled><span></span></span></button></article> }
     }).collect_view();

@@ -19,3 +19,12 @@ pub fn hydrate() {
     console_error_panic_hook::set_once();
     leptos::mount::hydrate_body(app::App);
 }
+
+#[cfg(feature = "ssr")]
+pub mod auth;
+#[cfg(feature = "ssr")]
+pub mod operations;
+#[cfg(feature = "ssr")]
+pub mod workspace_ui;
+#[cfg(feature = "ssr")]
+pub mod workspace_web;

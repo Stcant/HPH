@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: hph
+      POSTGRES_USER: hph_owner
+      POSTGRES_PASSWORD: ${HPH_POSTGRES_PASSWORD:?Set HPH_POSTGRES_PASSWORD}
+      HPH_RUNTIME_PASSWORD: ${HPH_RUNTIME_PASSWORD:?Set HPH_RUNTIME_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - hph-postgres:/var/lib/postgresql
+      - ./scripts/init-runtime.sh:/docker-entrypoint-initdb.d/10-runtime.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hph_owner -d hph"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  hph-postgres:

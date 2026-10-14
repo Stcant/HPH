@@ -103,6 +103,7 @@ impl<'a> CompanyModuleRepository<'a> {
                     "people" => Ok(ModuleId::People),
                     "attendance" => Ok(ModuleId::Attendance),
                     "reports" => Ok(ModuleId::Reports),
+                    "notes" => Ok(ModuleId::Notes),
                     _ => Err(CompanyModuleError::InvalidConfiguration(
                         "Unknown module ID.".into(),
                     )),
@@ -148,6 +149,7 @@ impl<'a> CompanyModuleRepository<'a> {
             (ModuleId::People, "people"),
             (ModuleId::Attendance, "attendance"),
             (ModuleId::Reports, "reports"),
+            (ModuleId::Notes, "notes"),
         ] {
             sqlx::query(
                 "INSERT INTO hph_company_modules (organization_id, module_id, enabled) \
