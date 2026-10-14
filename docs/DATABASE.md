@@ -1,36 +1,36 @@
-# PostgreSQL data model
+# PostgreSQL persistence
 
-Initial schema: `migrations/0001_company_data.sql`. It creates organizations, external user identities, people, company memberships, module configuration, and attendance events.
+HPH's authenticated mode uses PostgreSQL for accounts, opaque session hashes, company memberships, people, module selection, attendance, audit and notes. The explicit Leptos demo remains in-memory. See [WORKSPACE.md](WORKSPACE.md) for runnable setup and migration commands.
 
-## Tenant boundary
+## Role separation
 
-Organization-scoped tables enforce Row-Level Security (RLS) against `hph.tenant_id`. Each request touching company data must run in a transaction and set the verified user and selected organization with transaction-local settings:
+Use `HPH_MIGRATION_DATABASE_URL` only for operator CLI commands (`--migrate`, `--bootstrap`). Use `HPH_DATABASE_URL` for the server's non-owner role with NOSUPERUSER NOBYPASSRLS. Operational startup verifies those restrictions. The local Compose init script grants table and sequence access for the restricted role through the migration owner's default privileges.
 
-```sql
-SELECT set_config('hph.user_id', $1, true);
-SELECT set_config('hph.tenant_id', $2, true);
-```
+Company tables use forced RLS. `Database::begin_tenant_transaction` sets `hph.user_id` and `hph.tenant_id` only for the current transaction, preventing pooled connection context leaks. RLS is a second boundary, not a replacement for membership and role checks.
 
-The third argument must remain `true`, so both settings end with the transaction. The user ID must come from the authenticated server session; the selected organization must first be checked against an active membership. The database policies separate rows by tenant; the Rust service must also enforce active membership and role permissions before running an operation.
+Authentication tables are application-private global state: users, credentials and sessions are not exposed as direct SQL or general-purpose HTTP endpoints. The application role can operate on them for authentication. A valid session provides the user ID; company operations never trust caller-supplied identity.
 
-The production runtime role must not own these tables and must not have `BYPASSRLS`. Migrations should run with a separate owner role. Table owners normally bypass policies; `FORCE ROW LEVEL SECURITY` makes owners subject to policies, while superusers and `BYPASSRLS` roles always bypass them. CI runs the policy checks as a non-owner role without that attribute.
+## Transactions and history
 
-Composite foreign keys keep memberships and attendance events attached to a person in the same organization. An organization-scoped idempotency key prevents duplicate attendance events on request retries.
+`operations::begin` first locks the selected organization and verifies active membership plus active employee state. Company operations use this shared lock order so mutations, revocations, module selection and attendance checks cannot race within a company. Reads take the same lock for consistent snapshots; this intentionally favors simple correctness over high concurrency in the initial template.
 
-## Rust connection layer
+Time entries retain UTC timestamps and a per-person idempotency key. State transitions use the shared core rules. Exact retries return the existing effect; reusing a key for a different event is rejected. Timestamp corrections must preserve chronological validity and cannot collide with an existing event timestamp. Audit writes share the business transaction.
 
-The SSR server can open a bounded SQLx PostgreSQL pool with `HPH_DATABASE_URL`. If `HPH_MIGRATION_DATABASE_URL` is also set, startup applies migrations through that separate connection and then closes it. Use a migration owner for that URL and a runtime role without table ownership or `BYPASSRLS` for the runtime URL.
+Audit records are append-only through a database trigger, even for runtime roles granted UPDATE/DELETE on tables. The service records event IDs, old/new timestamps and reasons for corrections. The UI shows the latest 50 audit records. Tenant deletion and retention/export workflows are not implemented; deleting audit rows indirectly is also rejected by the trigger.
 
-Each database operation must start a transaction scoped to a previously verified user and organization through `Database::begin_tenant_transaction(user_id, tenant_id)`. Both RLS settings are transaction-local. The `/health` endpoint checks pool reachability when configured.
+## Migrations
 
-## Company module repository
+- `0001_company_data.sql`: organizations, global identities, people, memberships, module flags, attendance and company RLS.
+- `0002_workspace.sql`: active employees, branding, password credentials, expiring sessions, immutable audit and Notes.
 
-`src/module_repository.rs` provides tenant-scoped reads and atomic writes for `hph_company_modules`. Reads require an active membership; writes additionally require an active admin membership. The repository validates module dependencies through `hph-core` and records all flags together in one transaction. It returns `None` when no company selection is stored so the caller can apply its configured preset.
+Migrations preserve existing data. Operational startup does not apply migrations implicitly. Run the explicit migration CLI with the owner role and retain backups appropriate to your installation.
 
-Its PostgreSQL CI integration test seeds fixtures through a separate admin connection, then exercises repository reads and writes through a non-owner runtime role without `BYPASSRLS`.
+## Existing lower-level repositories
 
-The SSR screens and server functions do not call this repository yet. The current application still uses its in-memory demo actor, whose IDs are not database UUIDs. Connect it only after authentication supplies verified user and organization UUIDs; do not adapt the synthetic demo identity into a production database identity.
+`CompanyModuleRepository` and `MembershipRepository` remain tested building blocks. The operational service reuses the same database context and core contracts but performs membership, module and business checks together in its own transaction, avoiding nested independent transactions around writes.
 
-## Current limit
+## Verification
 
-People, attendance, memberships, and module configuration in the screens are still in-memory demo state. Authentication, session verification, HTTP integration, and production authorization remain out of scope. SQLx repository behavior is exercised against PostgreSQL in CI.
+CI applies the schema and SQL isolation cases, verifies the SQLx migrator and pool, then uses a restricted runtime role for repository and full HTTP workflow tests. The operational tests cover session selection, idempotent/concurrent requests, persistence across router restart, invalid dependencies, corrections, audit immutability, role denial, deactivation, RLS, logout and expiration. Browser checks run against this database and the real Rust server using synthetic accounts.
+
+Current reads load company event history in memory. Add pagination, retention and capacity testing before a large installation. The current checks do not constitute a deployment security assessment or backup recovery test.

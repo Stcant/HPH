@@ -8,6 +8,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     use leptos::prelude::*;
     use std::sync::Arc;
 
+    if std::env::args().any(|arg| arg == "--migrate") {
+        let db = Database::connect(&std::env::var("HPH_MIGRATION_DATABASE_URL")?).await?;
+        db.migrate().await?;
+        db.close().await;
+        println!("Migrations applied.");
+        return Ok(());
+    }
     if std::env::args().any(|arg| arg == "--bootstrap") {
         let db = Database::connect(&std::env::var("HPH_MIGRATION_DATABASE_URL")?).await?;
         db.migrate().await?;

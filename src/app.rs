@@ -217,7 +217,7 @@ fn Overview(
             <Stat title="People on the team" value=if people { total.to_string() } else { "—".into() } note=if people { "Demo profiles" } else { "Module disabled" } icon="people"/>
             <Stat title="Working now" value=if attendance { working.to_string() } else { "—".into() } note="From this session’s time entries" icon="clock"/>
             <Stat title="Recorded events" value=if attendance { events.to_string() } else { "—".into() } note="Clock-ins, breaks and clock-outs" icon="chart"/>
-            <Stat title="Active modules" value=format!("{active} / 4") note="A workspace that fits" icon="modules"/>
+            <Stat title="Active modules" value=format!("{active} / 3") note="A workspace that fits" icon="modules"/>
         </div>
         <div class="content-grid"><section class="panel"><div class="panel-heading"><div><h2>"Your team"</h2><p>"People at the heart of every day."</p></div>{people.then(|| view! { <button class="text-button" on:click=move |_| screen.set(Screen::People)>"View everyone →"</button> })}</div>
         {if people { view! { <PeopleTable data=data.clone()/> }.into_any() } else { view! { <div class="empty small"><Icon name="people"/><p>"Enable the People module to get started."</p></div> }.into_any() }}</section>

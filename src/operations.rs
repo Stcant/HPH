@@ -510,8 +510,9 @@ pub async fn set_modules(db: &Database, s: &Session, names: Vec<String>) -> AppR
     admin(&a)?;
     if !selected.contains(ModuleId::Attendance) {
         let all = events(&mut tx, a.tenant).await?;
-        for e in &all {
-            if sequence(&all, e.person)? != WorkState::Off {
+        let people: std::collections::HashSet<_> = all.iter().map(|event| event.person).collect();
+        for person in people {
+            if sequence(&all, person)? != WorkState::Off {
                 return Err(AppError::Invalid(
                     "Close all work sessions before disabling attendance.",
                 ));

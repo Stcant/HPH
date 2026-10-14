@@ -30,6 +30,9 @@ impl DemoState {
             Some(enabled) => ModuleSet::from_enabled(enabled)?,
             None => ModuleSet::preset(&config.preset)?,
         };
+        if modules.contains(ModuleId::Notes) {
+            return Err("Team notes requires the authenticated workspace.".into());
+        }
         let people = [
             (
                 "elena",
@@ -97,7 +100,10 @@ impl DemoState {
         Snapshot {
             workspace: workspace.clone(),
             actor_id: self.actor.person_id.clone(),
-            catalog: catalog(),
+            catalog: catalog()
+                .into_iter()
+                .filter(|module| module.id != ModuleId::Notes)
+                .collect(),
             server_time: chrono::Utc::now()
                 .format("%Y-%m-%d · %H:%M UTC")
                 .to_string(),

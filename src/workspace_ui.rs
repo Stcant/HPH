@@ -335,7 +335,7 @@ fn person_form(s: &Session, p: Option<&Person>) -> String {
     let field =
         |label, name, value, kind, required, max| input(label, name, value, kind, required, max);
     let body = format!(
-        "{}<div class=\"form-grid\">{}{}{}{}{}<label>Role<select name=\"role\"><option value=\"employee\">Employee</option><option value=\"admin\" {}>Administrator</option></select></label></div><label class=\"check\"><input type=\"checkbox\" name=\"active\" {}> Active employee</label>{}{}",
+        "{}<div class=\"form-grid\">{}{}{}{}{}<label>Role<select name=\"role\" aria-label=\"Role\"><option value=\"employee\">Employee</option><option value=\"admin\" {}>Administrator</option></select></label></div><label class=\"check\"><input type=\"checkbox\" name=\"active\" {}> Active employee</label>{}{}",
         hidden("id", &p.map(|p| p.id.to_string()).unwrap_or_default()),
         field(
             "Full name",
@@ -593,7 +593,7 @@ fn settings(s: &Session, d: &Snapshot) -> String {
         "/settings/save",
         s,
         format!(
-            "<div class=\"form-grid\">{}{}<label>Theme<select name=\"theme\"><option value=\"sage\">Sage</option><option value=\"indigo\" {}>Indigo</option></select></label>{}{}</div><p class=\"hint\">Logo files are managed by your installation administrator under public/assets/. Use /assets/your-logo.svg or leave empty for initials.</p>{}",
+            "<div class=\"form-grid\">{}{}<label>Theme<select name=\"theme\" aria-label=\"Theme\"><option value=\"sage\">Sage</option><option value=\"indigo\" {}>Indigo</option></select></label>{}{}</div><p class=\"hint\">Logo files are managed by your installation administrator under public/assets/. Use /assets/your-logo.svg or leave empty for initials.</p>{}",
             input("Company name", "name", &c.name, "text", true, 160),
             input(
                 "Company timezone",
