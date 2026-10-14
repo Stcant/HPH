@@ -64,6 +64,19 @@ impl Database {
         Ok(transaction)
     }
 
+    /// Operational requests must never bypass company RLS or own application tables.
+    pub async fn verify_runtime_role(&self) -> Result<(), sqlx::Error> {
+        let unsafe_role: bool = sqlx::query_scalar(
+            "SELECT r.rolsuper OR r.rolbypassrls OR EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'hph_%' AND tableowner=current_user) FROM pg_roles r WHERE r.rolname=current_user"
+        ).fetch_one(&self.pool).await?;
+        if unsafe_role {
+            return Err(sqlx::Error::Protocol(
+                "Use a non-owner PostgreSQL runtime role without SUPERUSER or BYPASSRLS".into(),
+            ));
+        }
+        Ok(())
+    }
+
     pub(crate) fn pool(&self) -> &PgPool {
         &self.pool
     }

@@ -67,6 +67,38 @@ jobs:
           HPH_TEST_DATABASE_URL="$HPH_TEST_ADMIN_DATABASE_URL" cargo test --features ssr database::tests::sqlx_pool_migrates_and_scopes_tenant_context --locked
           docker run --rm --network host -e PGPASSWORD=postgres postgres:18 \
             psql -h 127.0.0.1 -U postgres -d hph_app_test -v ON_ERROR_STOP=1 \
-              -c "GRANT USAGE ON SCHEMA public TO hph_runtime; GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO hph_runtime;"
+              -c "GRANT USAGE ON SCHEMA public TO hph_runtime; GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO hph_runtime; GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO hph_runtime;"
           cargo test --features ssr module_repository::tests::company_module_selection_is_tenant_scoped_and_admin_only --locked
           cargo test --features ssr membership_repository::tests::actor_resolution_uses_only_active_membership_in_selected_tenant --locked
+          cargo test --features ssr workspace_web::tests::operational_http_workflow_is_persistent_scoped_and_authorized --locked
+      - name: Build operational workspace and bootstrap synthetic portfolio company
+        env:
+          HPH_MIGRATION_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/hph_app_test
+          HPH_BOOTSTRAP_EMAIL: portfolio@example.test
+          HPH_BOOTSTRAP_PASSWORD: portfolio test password
+          HPH_BOOTSTRAP_NAME: Alex Morgan
+          HPH_BOOTSTRAP_COMPANY: Studio Aurora
+          HPH_BOOTSTRAP_SLUG: studio-aurora
+        run: |
+          cargo build --features ssr --locked
+          target/debug/hph --bootstrap
+      - name: Browser workflow and real portfolio captures
+        env:
+          HPH_DATABASE_URL: postgres://hph_runtime:hph_runtime@127.0.0.1:5432/hph_app_test
+          HPH_ORIGIN: http://127.0.0.1:3000
+        run: |
+          npm install --no-save --package-lock=false playwright@1.62.1
+          npx playwright install --with-deps chromium
+          target/debug/hph > /tmp/hph.log 2>&1 &
+          HPH_PID=$!
+          trap 'kill "$HPH_PID"' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/health; then break; fi
+            sleep 1
+          done
+          node scripts/browser-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-browser-captures
+          path: artifacts/browser

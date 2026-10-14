@@ -8,8 +8,45 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     use leptos::prelude::*;
     use std::sync::Arc;
 
+    if std::env::args().any(|arg| arg == "--bootstrap") {
+        let db = Database::connect(&std::env::var("HPH_MIGRATION_DATABASE_URL")?).await?;
+        db.migrate().await?;
+        hph::auth::bootstrap(
+            &db,
+            std::env::var("HPH_BOOTSTRAP_EMAIL")?,
+            std::env::var("HPH_BOOTSTRAP_PASSWORD")?,
+            std::env::var("HPH_BOOTSTRAP_NAME")?,
+            std::env::var("HPH_BOOTSTRAP_COMPANY")?,
+            std::env::var("HPH_BOOTSTRAP_SLUG")?,
+        )
+        .await?;
+        println!("Company and administrator created. Sign in to select the workspace.");
+        db.close().await;
+        return Ok(());
+    }
     if std::env::var("HPH_DEMO").as_deref() != Ok("true") {
-        return Err("This version is a local demo. Set HPH_DEMO=true; authentication and production database integration are not implemented yet.".into());
+        let database = Database::connect(&std::env::var("HPH_DATABASE_URL")?).await?;
+        database.verify_runtime_role().await?;
+        let origin = std::env::var("HPH_ORIGIN").unwrap_or_else(|_| "http://127.0.0.1:3000".into());
+        let state = hph::workspace_web::WebState::new(database, origin).await?;
+        let address: std::net::SocketAddr = std::env::var("HPH_BIND")
+            .unwrap_or_else(|_| "127.0.0.1:3000".into())
+            .parse()?;
+        if !state.secure && !address.ip().is_loopback() {
+            return Err("HTTP development mode must bind to loopback. Configure an HTTPS origin behind a TLS proxy for other deployments.".into());
+        }
+        let app = hph::workspace_web::router(state);
+        let listener = tokio::net::TcpListener::bind(address).await?;
+        println!("HPH workspace · listening on {address}");
+        axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+        )
+        .with_graceful_shutdown(async {
+            let _ = tokio::signal::ctrl_c().await;
+        })
+        .await?;
+        return Ok(());
     }
     let options = get_configuration(None)?.leptos_options;
     let address = options.site_addr;

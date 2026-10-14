@@ -7,6 +7,7 @@ pub enum ModuleId {
     People,
     Attendance,
     Reports,
+    Notes,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -19,6 +20,13 @@ pub struct ModuleDefinition {
 
 pub fn catalog() -> Vec<ModuleDefinition> {
     vec![
+        ModuleDefinition {
+            id: ModuleId::Notes,
+            name: "Team notes".into(),
+            description: "A shared company noticeboard. A small example of a complete module."
+                .into(),
+            dependencies: vec![ModuleId::People],
+        },
         ModuleDefinition {
             id: ModuleId::People,
             name: "People".into(),

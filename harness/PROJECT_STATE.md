@@ -1,5 +1,21 @@
 # HPH — Project state
 
+## Active implementation — 2026-10-13
+
+Status: in_progress on `feat/company-workspace`, based on `d6ee299822a8e0efe1f543406a25d317e82afe95`. User authorized all proposed features and PR/merge work. A clean local Git checkout and Rust toolchain are now available.
+
+| Deliverable | Acceptance / verification | Status |
+| --- | --- | --- |
+| Account login, logout and company selection | Opaque expiring DB sessions; Argon2 passwords; CSRF/origin checks; revoked membership denied; HTTP and DB tests | in_progress |
+| Persistent people and time entries | Admin create/edit/deactivate/roles; employee self-clock; idempotent writes; invalid sequences rejected; survives restart | pending |
+| Attendance and corrections | Company timezone; daily/monthly closed intervals split at midnight; reason and immutable audit; valid corrected sequence | pending |
+| Template customization | Company name, theme, accent and safe local logo; persisted module selection; working Notes module example | pending |
+| Browser/portfolio and documentation | Desktop/mobile workflow tests; real screenshot and GIF; English docs; configured CI; PR merge only after gates pass | pending |
+
+Design: keep the existing explicit loopback demo. Add an authenticated server-rendered Rust workspace with standard HTML forms, PostgreSQL transactions and per-operation membership checks. No external identity service, email delivery or deployment is required. All requested scope remains active; this plan does not mark later deliverables complete.
+
+Next action: implement and verify authenticated operational workspace, then complete all rows above. Historical evidence below describes previous increments only.
+
 ## Goal and phase
 
 Build a reusable modular business management application with a Rust frontend/backend and a carefully designed interface. The preference for Rust on the frontend supersedes the open frontend choice from the kickoff.
