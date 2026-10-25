@@ -34,6 +34,7 @@ Reusable foundation for modular business management software (time tracking firs
 - Screens still use in-memory demo state with a synthetic actor; its IDs are not DB UUIDs. Never adapt it into a tenant-scoped SQL identity.
 - Deeply nested SSR components overflowed the stack; component boundaries use `AnyView`.
 - Timestamps are UTC, server-generated, displayed as `YYYY-MM-DD`.
+- The deployment model (dedicated instance or multi-company service) is undecided: keep the tenant boundary explicit everywhere.
 
 ## Do not
 - Expose the demo through a proxy, tunnel or public network, or load real company data before authentication and persistence are integrated.

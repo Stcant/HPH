@@ -106,7 +106,7 @@ Domain tests cover dependencies, permissions, foreign companies, duplicate clock
 - `src/module_repository.rs` and `src/membership_repository.rs`: company module configuration and active membership lookup.
 - `style/main.css`: layout, tokens, themes and mobile styles.
 - `docs/MODULES.md`: the module extension contract.
-- `harness/PROJECT_MAP.md` and `harness/PROJECT_STATE.md`: architecture and project checkpoint.
+- `AGENTS.md` and `.dev-brain/STATE.md`: project facts for coding agents and the current checkpoint (goal, evidence, next actions).
 
 The next functional increment is **authentication and sessions**. The SQLx repository can already resolve an active membership for a selected company, but the screens do not use it yet. Until authentication, authorization and application persistence are integrated, HPH remains a local demo and must not host real company data.
 
